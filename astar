@@ -1,0 +1,94 @@
+#!/bin/sh
+##############################
+# astar - A P.O.C. for creating an Allstar connectivity graph
+#
+# HISTORICAL INFORMATION -
+#
+# 2018-12-11  msipin  Created.
+##############################
+
+# Starting NODE number (usually is *YOUR* node number!) - unless you
+# override it on the command line!
+SEED_NODE_NUMBER=`echo $NODE1`
+
+
+if [ $# -ge 1 ]
+then
+    SEED_NODE_NUMBER=$1
+fi
+
+master_list=""
+done_list=""
+added=0
+
+# Add SEED node to master list
+master_list=`echo ${master_list} $SEED_NODE_NUMBER`
+
+##echo "DEBUG: Master list: $master_list"
+##echo "DEBUG: DONE list:   $done_list"
+
+added=1
+while [ $added = 1 ]
+do
+  added=0
+  add_list=""
+  for try_node in $master_list
+  do
+    rslt=`echo $done_list | grep -c $try_node`
+    if [ $rslt = 0 ]
+    then
+        #echo "DEBUG: Doing: ${try_node}..."
+        # try_node is *NOT* in "done list"
+
+        # Add try_node to "done" list
+        done_list=`echo ${done_list} $try_node`
+
+        # Check the connectedness of try_node...
+        newest=`wget -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${try_node} | awk -F"?node=" '{
+for (i=1;i<=NF;i++) {
+    printf "%s\n\n",$i;
+};
+}' | grep callsign | sed "s/<\/a>/ /g" | awk '{ print $2 }' | sed "s/C//g"`
+
+        #echo "DEBUG NEWEST: $newest"
+        for check in $newest
+        do
+                rslt=`echo $master_list | grep -c $check`
+                if [ $rslt = 0 ]
+                then
+                        #echo "DEBUG: ${check} is not in master list!"
+                        # check is NOT in master list
+                        added=1
+                        # Add node to to-be-added list
+                        add_list=`echo ${add_list} $check`
+                #else
+                        #echo "DEBUG: ${check} is already in master list"
+                fi
+        done
+
+    #else
+        #echo "DEBUG: ${try_node} is *ALREADY* in done list"
+    fi
+  done
+
+  # Add add_list to master_list
+  master_list=`echo ${master_list} ${add_list}`
+
+  #echo
+  #echo "DEBUG: Latest master_list: ${master_list}"
+done
+
+##echo
+##echo
+#echo "DEBUG: *FINAL* master_list: ${master_list}"
+##echo
+
+# Display total list of interconnected nodes
+for NODE in ${master_list}
+do
+ dig ${NODE}.nodes.hamvoip.org txt | egrep -v "^;|^\." |grep TXT | awk -F"@" '{ print $2 }' | sed "s/\// /g" | sed "s/,/ /g" | awk '{ print $2,$1 }'
+done | sort -n
+
+
+exit 0
+

@@ -1,0 +1,154 @@
+#!/bin/sh
+####################
+# txlog - Attempt to figure out who is currently Transmitting across the given Allstar node list
+#
+# HISTORICAL INFORMATION -
+#
+#  2018-12-11  msipin  Created
+#  2018-12-12  msipin  Added display of "raw" data when changes are detected (requires code
+#                      change to "SHOW_RAW" variable, below).
+####################
+
+SHOW_RAW=0	# Set to "1" if you want to see the "raw" data for all nodes upon delta detection
+
+# Output of the "astar" tool -
+#	48370 24.217.244.23:4569
+#	49125 47.146.135.207:4569
+#	49168 12.43.64.59:4569
+#	49397 104.0.9.30:4569
+#	49485 97.86.179.18:4569
+#	49517 96.35.61.232:4569
+
+# Starting NODE number (usually is *YOUR* node number!) - unless you
+# override it on the command line!
+SEED_NODE_NUMBER=`echo $NODE1`
+
+
+if [ $# -ge 1 ]
+then
+    SEED_NODE_NUMBER=$1
+fi
+
+
+tmp_file1="./txlog.1"
+tmp_file2="./txlog.2"
+tmp_file3="./txlog.3"
+
+trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3; exit 0" 0 1 2 3 6 12 15
+
+
+rm -f $tmp_file1 $tmp_file2 $tmp_file3
+
+# Develop list of nodes to check
+NODE_LIST=`astar $SEED_NODE_NUMBER | awk '{ print $1; }'`
+
+
+count=0
+while [ 1 ]
+do
+    rm -f $tmp_file2 $tmp_file3
+    for NODE in $NODE_LIST
+    do
+	##echo "DEBUG: Checking ${NODE}..."
+	data=`wget -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${NODE} | awk -F"<tr><td>" '{ for (i=1;i<=NF;i++) { print $i; }; }' | grep time | sed "s/</ /g" | sed "s/>/ /g" | sed "s/\// /g" | sed "s/ td / /g" | sed "s/ tr//g"`
+
+	# ALL DATA -
+	if [ ""$SHOW_RAW"" -eq 1 ]
+	then
+		echo ${data} | awk '{ printf "%s %s\n", NODE, $0; }' NODE=${NODE} >> $tmp_file3
+	fi
+
+	# Precise fields -
+	echo ${data} | awk '{ printf "%s %s\n", NODE, $0; }' NODE=${NODE} | awk '{ print $1,$6; }' >> $tmp_file2
+    done
+
+    #echo "DEBUG: Done gathering list"
+
+    count=`expr $count + 1`
+
+    if [ ""$count"" = 1 ]
+    then
+		##echo "DEBUG: Moving file 2 to file 1 (because 1st run)"
+		mv $tmp_file2 $tmp_file1
+    else
+		##echo "DEBUG: comparing files..."
+		rslt=`diff ${tmp_file1} ${tmp_file2} | wc -l`
+		#echo "DEBUG: rslt = $rslt"
+
+		###echo "DEBUG: Exiting for debugging..."
+		###exit 2
+
+		if [ ""$rslt"" -ne "0" ]
+		then
+			delta=`diff ${tmp_file1} ${tmp_file2} | awk '{
+if (NF == 3) {
+	node=$2;
+	before=$3;
+	getline;
+	getline;
+	after=$3;
+
+	#printf "%d\t%s  %s\n", node, before, after;
+	printf "%d\t%d\t\n", node, (after-before);
+};
+}'`
+			echo `date` " -    " $delta
+
+			# Show "raw" data from all nodes just for grins...
+			if [ ""$SHOW_RAW"" -eq 1 ]
+			then
+				cat $tmp_file3 | awk '{ printf "\t%s\n", $0; }'
+			fi
+
+			##echo "DEBUG: Moving file 2 to file 1 (after delta)"
+			mv $tmp_file2 $tmp_file1
+			count=1
+		fi
+    fi
+done
+
+
+exit 0
+
+
+
+Tue Dec 11 23:23:17 PST 2018
+2c2
+< 49125 1544599354
+---
+> 49125 1544599393
+
+
+
+
+ total time    28653
+ keytime    1544576309
+ total exec time    45
+time stamp    1544580839
+
+
+
+Over time, the output looks like this - 
+
+48370 1544581402
+
+49125 1544576309
+49125 1544581899  <<== talking!
+49125 1544581904  <<== talking!
+49125 1544581915  <<== talking!
+49125 1544581922  <<== talking!
+49125 1544581943  <<== talking!
+49125 1544581948  <<== talking!
+
+49168 1544538986
+
+49397 1544569072
+49397 1544581907  <<== talking!
+49397 1544581912  <<== talking!
+49397 1544581928  <<== talking!
+49397 1544581937  <<== talking!
+49397 1544581953  <<== talking!
+
+49485 1544365761
+49517 1544484300
+
