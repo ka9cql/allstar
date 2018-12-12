@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="refresh" content="67">
+<title>Allstar Connections</title>
+
+<!--
+
+Make sure to add a node number to this page's URL (e.g. "http://<ip_address>/supermon/AllstarBubbleDiagram.html?node=<node_number>")
+
+If you don't, then the default below (49485) will be displayed.
+
+-->
+
+</head>
+<body>
+
+<script type="text/javascript">
+
+function qs(search_for) {
+		var query = window.location.search.substring(1);
+		var parms = query.split('&');
+		for (var i=0; i<parms.length; i++) {
+			var pos = parms[i].indexOf('=');
+			if (pos > 0  && search_for == parms[i].substring(0,pos)) {
+				return parms[i].substring(pos+1);;
+			}
+		}
+		return "49485"; // This is the default node number that will be shown if none is provided in the URL
+	}
+
+document.write('<iframe src="http://stats.allstarlink.org/getstatus.cgi?');
+
+document.write(qs("node"));
+
+document.write('" height="900" width="1400">');
+
+</script>
+
+
+</body>
+</html>
+
