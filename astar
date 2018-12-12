@@ -5,6 +5,8 @@
 # HISTORICAL INFORMATION -
 #
 # 2018-12-11  msipin  Created.
+# 2018-12-12  msipin  Tried using nodes{1,2,3,4}.allstarlink.org/cgi-bin/nodes.pl
+#                     to get nodes' IP address:port information
 ##############################
 
 # Starting NODE number (usually is *YOUR* node number!) - unless you
@@ -83,12 +85,36 @@ done
 #echo "DEBUG: *FINAL* master_list: ${master_list}"
 ##echo
 
-# Display total list of interconnected nodes
-for NODE in ${master_list}
-do
- dig ${NODE}.nodes.hamvoip.org txt | egrep -v "^;|^\." |grep TXT | awk -F"@" '{ print $2 }' | sed "s/\// /g" | sed "s/,/ /g" | awk '{ print $2,$1 }'
-done | sort -n
+# Display total list of interconnected nodes using dig results -
+### for NODE in ${master_list}
+### do
+###  dig ${NODE}.nodes.hamvoip.org txt | egrep -v "^;|^\." |grep TXT | awk -F"@" '{ print $2 }' | sed "s/\// /g" | sed "s/,/ /g" | awk '{ print $2,$1 }'
+### done | sort -n
+
+# Display total list of interconnected nodes using wget from nodes.pl URL -
+# NOTE: You can also get this info from http://nodes(x).allstarlink.org/cgi-bin/nodes.pl
+#       (nodes1, nodes2, nodes3, nodes4) - it comes down as a text page in
+#       much the same format as the TXT records retrieved from dns/dig.
+
+# First, turn list of nodes into "egrep" pattern search
+egrep_str=`echo $master_list | awk '{ for (i=1;i<=NF;i++) {
+        if ($i != "NO-ID") {
+                if (i > 1) printf "|";
+                printf "^%s=",$i;
+        }
+};
+        printf "\n";
+}'`
+
+##echo "DEBUG: egrep_str - $egrep_str"
+
+# Use egrep pattern against wget results from nodes(x).....nodes.pl -
+wget -q -O- http://nodes1.allstarlink.org/cgi-bin/nodes.pl | egrep "${egrep_str}" | sed "s/=radio@/ /g" | awk -F"/" '{ print $1 }' | sort -n
 
 
 exit 0
+
+# Output of nodes1.allstarlink.org/cgi-bin/nodes.pl -
+48370=radio@24.217.244.23:4569/48370,24.217.244.23
+49125=radio@47.146.135.207:4569/49125,47.146.135.207
 
