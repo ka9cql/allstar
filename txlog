@@ -151,12 +151,12 @@ if (NF == 3) {
 	##echo "DEBUG: connects: [${connects}]"
 	if [ -n ""`echo ${disconnects} | sed 's/ //g'`"" ]
 	then
-		echo `date`"    - DISCONNECTS: $disconnects"
+		echo `date`"  - DISCONNECT: $disconnects"
 	fi
 
 	if [ -n ""`echo ${connects} | sed 's/ //g'`"" ]
 	then
-		echo `date`"    -    CONNECTS: $connects"
+		echo `date`"  - CONNECT: $connects"
 	fi
 
 	# Let script know we've got a new list to work with
