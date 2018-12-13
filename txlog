@@ -55,7 +55,7 @@ rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5
 
 
 get_node_list() {
-	echo `date`"  -  DEBUG: Checking for connects/disconnects..."
+	##echo `date`"  -  DEBUG: Checking for connects/disconnects..."
 	# Develop list of nodes to check
 	NODE_LIST=`astar $SEED_NODE_NUMBER | awk '{ print $1; }'`
 	#echo "DEBUG: NODE_LIST: [${NODE_LIST}]"
