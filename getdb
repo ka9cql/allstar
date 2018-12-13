@@ -7,11 +7,23 @@
 # HISTORICAL INFORMATION -
 #
 #  2018-12-12  msipin  Created.
+#  2018-12-13  msipin  Added "-h" command-line argument to show where file ("db") gets stored.
 #####################################
 
 CMD="lynx"
 
 outfile=/var/tmp/nodes.db
+
+
+if [ $# -ge 1 -a ""$1"" = "-h" ]
+then
+	echo
+	echo "Allstar node database location: $outfile"
+	echo
+	exit 1
+fi
+
+
 
 rm -f $outfile
 
