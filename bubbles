@@ -1,0 +1,80 @@
+#!/bin/sh
+##############################
+# bubbles - Draw "bubbles" diagram (connectivity graph) for given Allstar node "seed"
+#
+# HISTORICAL INFORMATION -
+#
+# 2018-12-12  msipin  Created.
+##############################
+
+SEED_NODE_NUMBER=""
+
+
+outdot="/var/tmp/bubbles.$$.dot"
+outsvg="/srv/http/supermon/bubbles.svg"
+
+trap "rm -f $outdot; exit 0" 0 1 2 3 6 12 15
+
+
+rm -f $outdot
+
+# Starting NODE number (usually is *YOUR* node number!) - unless you
+# override it on the command line!
+if [ $# -lt 1 ]
+then
+	SEED_NODE_NUMBER=`echo $NODE1`
+fi
+
+while [ $# -ge 1 ]
+do
+    SEED_NODE_NUMBER=`echo $SEED_NODE_NUMBER $1`
+    shift 1
+done
+
+echo "DEBUG: DRAW_CONNECTIVITY: $DRAW_CONNECTIVITY"
+echo "DEBUG: SEED_NODE_NUMBER: [${SEED_NODE_NUMBER}]"
+##exit 2
+
+
+rm -f $outdot
+####################################
+# SMALL -
+#        pad="0.5";
+#        overlap=scalexy;
+#        nodesep=0.6;
+####################################
+# HUGE -
+#        pad="0.5";
+#        splines=true;
+#        overlap=false;
+#        nodesep=0.6;
+####################################
+# FROM ODROID DURING CARNA-BOTNET-MAPPING -
+#   pad="0.5";
+#   ranksep="2";
+#   splines=true;
+#   overlap=scalexy;
+#   nodesep=0.6;
+####################################
+# ACTUAL -
+#   pad="0.5";
+#   overlap=scalexy;
+#   nodesep=0.6;
+####################################
+
+cat << EOF >> $outdot
+graph {
+overlap=scalexy;
+splines=true;
+EOF
+
+astar -b $SEED_NODE_NUMBER >> $outdot
+
+echo "}" >> $outdot
+
+rm -f $outsvg
+neato -Tsvg  $outdot > $outsvg
+
+
+exit 0
+

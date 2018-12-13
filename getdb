@@ -1,0 +1,40 @@
+#!/bin/sh
+#####################################
+# getdb - Get the current list of all active Allstar nodes and
+#         save it to a local file with delimited fields for use by
+#         other tools.
+#
+# HISTORICAL INFORMATION -
+#
+#  2018-12-12  msipin  Created.
+#####################################
+
+CMD="lynx"
+
+outfile=/var/tmp/nodes.db
+
+rm -f $outfile
+
+rslt=`which $CMD |&grep -v "which: no"`
+if [ -z ""$rslt"" ]
+then
+	echo
+	echo "Error: Don't have $CMD on this system (or somewhere in your \$PATH)!"
+	echo
+	echo "(Possibly install with 'pacman -S ${CMD}')"
+	echo
+	exit 2
+fi
+
+
+###   $CMD -dump -width 500 http://stats.allstarlink.org/ | grep "Map" | grep "Bubble" | sed "s/\[[0-9]*\]/|/g" | sed "s/|Map |Bubble /|/" | sed "s/ |/|/g" | sed "s/ [0-9]*S$//" | sed "s/ [0-9]*M$//" | sed "s/ [0-9]*H$//" | sed "s/ [0-9]*D$//" | sed "s/^  |/|/" > $outfile
+
+$CMD -dump -width 500 http://stats.allstarlink.org/ | sed "s/\[[0-9]*\]/|/g" | sed "s/|Map |Bubble /|/" | sed "s/ |/|/g" | sed "s/ [0-9]*S$//" | sed "s/ [0-9]*M$//" | sed "s/ [0-9]*H$//" | sed "s/ [0-9]*D$//" | sed "s/^  |/|/" | awk -F"|" '{ if (NF > 3) print $0 }' >  $outfile
+
+# Display how many records retrieved
+echo
+wc -l $outfile | awk '{ printf "%s records saved to %s\n", $1, $2; }'
+echo
+
+exit 0
+

@@ -10,14 +10,29 @@
 #                     node numbers on command line. Added default timeouts on
 #                     "wget" requests. Allowed switching between dig/DNS and
 #                     HTTP GET technique to develop node/IP:port list (requires change
-#                     to this code to switch).
+#                     to this code to switch). Added ability to show connectedness (as a
+#                     prelude to using graphviz to draw a bubble graph!) by specifying
+#                     a "-b" command-line argument.
 ##############################
 
 SEED_NODE_NUMBER=""
 
+# Set to "1" to draw connectivity graphs, set to "0" to skip this
+DRAW_CONNECTIVITY=0
+BUBBLES_ARG="-b"
+
 # Max timeouts for wget commands (in seconds)
 WGET_TIMEOUT=20			# Looking up one node
 WGET_FULL_LIST_TIMEOUT=60	# Grabbing entire "node list"
+
+# Check for "draw bubbles" first!
+if [ $# -ge 1 -a ""$1"" = ""$BUBBLES_ARG"" ]
+then
+	# User wants bubbles!
+	DRAW_CONNECTIVITY=1
+	shift 1
+fi
+
 
 # Starting NODE number (usually is *YOUR* node number!) - unless you
 # override it on the command line!
@@ -32,6 +47,7 @@ do
     shift 1
 done
 
+##echo "DEBUG: DRAW_CONNECTIVITY: $DRAW_CONNECTIVITY"
 ##echo "DEBUG: SEED_NODE_NUMBER: [${SEED_NODE_NUMBER}]"
 ##exit 2
 
@@ -80,6 +96,13 @@ for (i=1;i<=NF;i++) {
 			added=1
 			# Add node to to-be-added list
 			add_list=`echo ${add_list} $check`
+
+
+			if [ ""$DRAW_CONNECTIVITY"" -eq 1 ]
+			then
+				# Draw connectivity between these nodes
+				echo "\"${try_node}\" -- \"${check}\";"
+			fi
 		#else
 			#echo "DEBUG: ${check} is already in master list"
 		fi
@@ -102,17 +125,19 @@ done
 #echo "DEBUG: *FINAL* master_list: ${master_list}"
 ##echo
 
-# Set to "1" to use DNS/dig technique
-# Set to "0" to use HTTP GET technique
-if [ 1 ]
+if [ ""$DRAW_CONNECTIVITY"" -eq 0 ]
 then
+  # Set to "1" to use DNS/dig technique
+  # Set to "0" to use HTTP GET technique
+  if [ 1 ]
+  then
 
 	# Display total list of interconnected nodes using dig results -
 	for NODE in ${master_list}
 	do
 		dig ${NODE}.nodes.hamvoip.org txt | egrep -v "^;|^\." |grep TXT | awk -F"@" '{ print $2 }' | sed "s/\// /g" | sed "s/,/ /g" | awk '{ print $2,$1 }'
 	done | sort -n
-else
+  else
 	# Display total list of interconnected nodes using wget from nodes.pl URL -
 	# NOTE: You can also get this info from http://nodes(x).allstarlink.org/cgi-bin/nodes.pl
 	#       (nodes1, nodes2, nodes3, nodes4) - it comes down as a text page in
@@ -132,6 +157,7 @@ else
 
 	# Use egrep pattern against wget results from nodes(x).....nodes.pl -
 	wget --timeout=${WGET_FULL_LIST_TIMEOUT} -q -O- http://nodes1.allstarlink.org/cgi-bin/nodes.pl | egrep "${egrep_str}" | sed "s/=radio@/ /g" | awk -F"/" '{ print $1 }' | sort -n
+  fi
 fi
 
 
