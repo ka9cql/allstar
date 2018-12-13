@@ -37,7 +37,7 @@ WGET_FULL_LIST_TIMEOUT=60	# Grabbing entire "node list"
 tmp_file1=/dev/shm/astar.$$.1
 tmp_file2=/dev/shm/astar.$$.2
 
-#trap "rm -f $tmp_file1 $tmp_file2; exit 0" 0 1 2 3 6 12 15
+trap "rm -f $tmp_file1 $tmp_file2; exit 0" 0 1 2 3 6 12 15
 
 
 rm -f $tmp_file1 $tmp_file2

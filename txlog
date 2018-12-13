@@ -11,7 +11,12 @@
 #                      timeout to "wget" requests. Added ability to detect changes to list of
 #                      connected nodes. Added process-id to tmp_file(x) filenames so we can run
 #                      multiple copies of this tool at the same time without conflict.
+#  2018-12-13  msipin  Displayed data from Allstar-node db (if available) for each node.
 ####################
+
+# Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
+# NOTE: THIS MUST MATCH WHAT IS SPECIFIED IN "getdb"!!
+ALLSTAR_NODE_DB=/var/tmp/nodes.db
 
 SHOW_RAW=0	# Set to "1" if you want to see the "raw" data for all nodes upon delta detection
 
@@ -23,13 +28,16 @@ WGET_TIMEOUT=15
 ### PRODUCTION VALUE - 20	averages about 60 - 80 seconds for a 6-node network
 GENERATE_NODE_LIST_MODULO=30
 
+
+
 # Output of the "astar" tool -
-#	48370 24.217.244.23:4569
-#	49125 47.146.135.207:4569
-#	49168 12.43.64.59:4569
-#	49397 104.0.9.30:4569
-#	49485 97.86.179.18:4569
-#	49517 96.35.61.232:4569
+#    48370   24.217.244.23:4569     |AA0Z|144.250|St. Louis, MO
+#    49125   47.146.135.207:4569    |KA9CQL|445.000 131.8|Victorville, CA, USA
+#    49168   12.43.64.59:4569       |KE0OZU|144.250 141.3|STL, MO
+#    49397   104.0.9.30:4569        |N9RZR|144.250 141.3|St. Louis, MO
+#    49485   97.86.179.18:4569      |W0SRC||St. Louis, MO
+#    49517   96.35.61.232:4569      |AE0DN|435.000|Ballwin, MO
+
 
 # Starting NODE number (usually is *YOUR* node number!) - unless you
 # override it on the command line!
@@ -49,16 +57,22 @@ tmp_file3="/dev/shm/txlog.$$.3"
 tmp_file4="/dev/shm/txlog.$$.4"
 tmp_file5="/dev/shm/txlog.$$.5"
 
-trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5; exit 0" 0 1 2 3 6 12 15
+tmp_db_file=/dev/shm/astar.$$.db
 
 
-rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5
+trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_db_file; exit 0" 0 1 2 3 6 12 15
+
+
+rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_db_file
 
 
 get_node_list() {
 	##echo `date`"  -  DEBUG: Checking for connects/disconnects..."
+	rm -f $tmp_db_file
+	# Develop "local database" of currently-connected nodes
+	astar $SEED_NODE_NUMBER >> $tmp_db_file
 	# Develop list of nodes to check
-	NODE_LIST=`astar $SEED_NODE_NUMBER | awk '{ print $1; }'`
+	NODE_LIST=`cat $tmp_db_file | awk '{ print $1; }'`
 	#echo "DEBUG: NODE_LIST: [${NODE_LIST}]"
 }
 
@@ -146,18 +160,42 @@ if (NF == 3) {
 	##echo "DEBUG: NEW_NODE_LIST: [`cat $tmp_file5`]"
 
 	##echo "DEBUG: Node-list diff: "
-	disconnects=`diff $tmp_file4 $tmp_file5 | grep "<" | sed "s/<//g" `
+	disconnects=`diff $tmp_file4 $tmp_file5 | grep "<" | sed "s/<//g" | awk '{ print $1 }'`
 	##echo "DEBUG: disconnects: [${disconnects}]"
-	connects=`diff $tmp_file4 $tmp_file5 | grep ">" | sed "s/>//g" `
+	connects=`diff $tmp_file4 $tmp_file5 | grep ">" | sed "s/>//g" | awk '{ print $1 }'`
 	##echo "DEBUG: connects: [${connects}]"
+
 	if [ -n ""`echo ${disconnects} | sed 's/ //g'`"" ]
 	then
-		echo `date`"  - DISCONNECT: $disconnects"
+		echo `date`"  - DISCONNECT:"
+		for NODE2 in $disconnects
+		do
+			# If Allstar node database exists, and non-zero-length...
+			if [ -s ""$ALLSTAR_NODE_DB"" ]
+			then
+				##echo "DEBUG: NODE2: [${NODE2}]"
+				##grep "^$|{NODE2}|" $ALLSTAR_NODE_DB | awk '{ print "  - ",$0; }'
+				grep "^|${NODE2}|" $ALLSTAR_NODE_DB | awk -F"|" '{
+printf "  -  %-7d",$2;
+for (i=3;i<=NF;i++) {
+    printf "%s%s", FS, $i;
+}
+printf "\n";
+}'
+			else
+				echo "  - ${NODE2} (NODES.DB NOT FOUND)"
+			fi
+		done
 	fi
 
 	if [ -n ""`echo ${connects} | sed 's/ //g'`"" ]
 	then
-		echo `date`"  - CONNECT: $connects"
+		echo `date`"  - CONNECT:"
+		for NODE2 in $connects
+		do
+			##grep "^${NODE2} " $tmp_db_file | awk '{ $2=""; print "  + ",$0; }'
+			grep "^${NODE2} " $tmp_db_file | awk '{ $2=""; print "  + ",$0; }'
+		done
 	fi
 
 	# Let script know we've got a new list to work with
@@ -177,36 +215,9 @@ Tue Dec 11 23:23:17 PST 2018
 > 49125 1544599393
 
 
-
-
  total time    28653
  keytime    1544576309
  total exec time    45
 time stamp    1544580839
 
-
-
-Over time, the output looks like this - 
-
-48370 1544581402
-
-49125 1544576309
-49125 1544581899  <<== talking!
-49125 1544581904  <<== talking!
-49125 1544581915  <<== talking!
-49125 1544581922  <<== talking!
-49125 1544581943  <<== talking!
-49125 1544581948  <<== talking!
-
-49168 1544538986
-
-49397 1544569072
-49397 1544581907  <<== talking!
-49397 1544581912  <<== talking!
-49397 1544581928  <<== talking!
-49397 1544581937  <<== talking!
-49397 1544581953  <<== talking!
-
-49485 1544365761
-49517 1544484300
 
