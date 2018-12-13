@@ -212,7 +212,3 @@ fi
 
 exit 0
 
-# Output of nodes1.allstarlink.org/cgi-bin/nodes.pl -
-48370=radio@24.217.244.23:4569/48370,24.217.244.23
-49125=radio@47.146.135.207:4569/49125,47.146.135.207
-

@@ -5,12 +5,13 @@
 # HISTORICAL INFORMATION -
 #
 # 2018-12-12  msipin  Created.
+# 2018-12-13  msipin  Added annotations to each node
 ##############################
 
 SEED_NODE_NUMBER=""
 
 
-outdot="/var/tmp/bubbles.$$.dot"
+outdot="/dev/shm/bubbles.$$.dot"
 outsvg="/srv/http/supermon/bubbles.svg"
 
 trap "rm -f $outdot; exit 0" 0 1 2 3 6 12 15
@@ -66,9 +67,15 @@ cat << EOF >> $outdot
 graph {
 overlap=scalexy;
 splines=true;
+forcelabels=true;
 EOF
 
 astar -b $SEED_NODE_NUMBER >> $outdot
+
+# Add annotations to each node
+astar $SEED_NODE_NUMBER | sed "s/ /|/" | awk -F"|" '{
+printf "%s [label=\"%s - %s\n%s\"];\n", $1, $3, $1, $5;
+}' >> $outdot
 
 echo "}" >> $outdot
 

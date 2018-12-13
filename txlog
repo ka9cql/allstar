@@ -30,15 +30,6 @@ GENERATE_NODE_LIST_MODULO=30
 
 
 
-# Output of the "astar" tool -
-#    48370   24.217.244.23:4569     |AA0Z|144.250|St. Louis, MO
-#    49125   47.146.135.207:4569    |KA9CQL|445.000 131.8|Victorville, CA, USA
-#    49168   12.43.64.59:4569       |KE0OZU|144.250 141.3|STL, MO
-#    49397   104.0.9.30:4569        |N9RZR|144.250 141.3|St. Louis, MO
-#    49485   97.86.179.18:4569      |W0SRC||St. Louis, MO
-#    49517   96.35.61.232:4569      |AE0DN|435.000|Ballwin, MO
-
-
 # Starting NODE number (usually is *YOUR* node number!) - unless you
 # override it on the command line!
 SEED_NODE_NUMBER=`echo $NODE1`
