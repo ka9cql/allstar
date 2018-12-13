@@ -131,7 +131,20 @@ if (NF == 3) {
 	printf "%d\t%d\t\n", node, (after-before);
 };
 }'`
-			echo `date` " -    " $delta
+			##echo `date` " -    " $delta
+			echo -n `date` " -"
+
+			echo "$delta" | while IFS= read LINE
+			do
+				NODE=`echo $LINE | awk '{ print $1}'`
+				TIME=`echo $LINE | awk '{ $1=""; print $0}'`
+				###echo "DEBUG: LINE: $LINE   NODE: $NODE   TIME: $TIME"
+
+				data=`grep "^${NODE} " $tmp_db_file | awk '{ $1=""; $2=""; print $0; }'`
+				echo "  $NODE $TIME $data"
+			done
+
+
 
 			# Show "raw" data from all nodes just for grins...
 			if [ ""$SHOW_RAW"" -eq 1 ]
