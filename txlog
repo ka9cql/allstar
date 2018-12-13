@@ -6,10 +6,21 @@
 #
 #  2018-12-11  msipin  Created
 #  2018-12-12  msipin  Added display of "raw" data when changes are detected (requires code
-#                      change to "SHOW_RAW" variable, below).
+#                      change to "SHOW_RAW" variable, below). Moved temporary files to /var/tmp
+#                      and ensured they're deleted when this command terminates. Added default
+#                      timeout to "wget" requests. Added ability to detect changes to list of
+#                      connected nodes.
 ####################
 
 SHOW_RAW=0	# Set to "1" if you want to see the "raw" data for all nodes upon delta detection
+
+# Max timeout for any one wget command (in seconds)
+WGET_TIMEOUT=15
+
+# How often (after how many loops) to check the node list for connects/disconnects
+### TEST VALUE - 5		averages 13-14 seconds for a 6-node network
+### PRODUCTION VALUE - 20	averages about 60 - 80 seconds for a 6-node network
+GENERATE_NODE_LIST_MODULO=30
 
 # Output of the "astar" tool -
 #	48370 24.217.244.23:4569
@@ -23,6 +34,7 @@ SHOW_RAW=0	# Set to "1" if you want to see the "raw" data for all nodes upon del
 # override it on the command line!
 SEED_NODE_NUMBER=`echo $NODE1`
 
+NODE_LIST=""
 
 if [ $# -ge 1 ]
 then
@@ -30,17 +42,28 @@ then
 fi
 
 
-tmp_file1="./txlog.1"
-tmp_file2="./txlog.2"
-tmp_file3="./txlog.3"
+tmp_file1="/var/tmp/txlog.1"
+tmp_file2="/var/tmp/txlog.2"
+tmp_file3="/var/tmp/txlog.3"
+tmp_file4="/var/tmp/txlog.4"
+tmp_file5="/var/tmp/txlog.5"
 
-trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3; exit 0" 0 1 2 3 6 12 15
+trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5; exit 0" 0 1 2 3 6 12 15
 
 
-rm -f $tmp_file1 $tmp_file2 $tmp_file3
+rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5
 
-# Develop list of nodes to check
-NODE_LIST=`astar $SEED_NODE_NUMBER | awk '{ print $1; }'`
+
+get_node_list() {
+	echo `date`"  -  DEBUG: Checking for connects/disconnects..."
+	# Develop list of nodes to check
+	NODE_LIST=`astar $SEED_NODE_NUMBER | awk '{ print $1; }'`
+	#echo "DEBUG: NODE_LIST: [${NODE_LIST}]"
+}
+
+
+# Generate initial NODE_LIST
+get_node_list
 
 
 count=0
@@ -50,7 +73,7 @@ do
     for NODE in $NODE_LIST
     do
 	##echo "DEBUG: Checking ${NODE}..."
-	data=`wget -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${NODE} | awk -F"<tr><td>" '{ for (i=1;i<=NF;i++) { print $i; }; }' | grep time | sed "s/</ /g" | sed "s/>/ /g" | sed "s/\// /g" | sed "s/ td / /g" | sed "s/ tr//g"`
+	data=`wget --timeout=${WGET_TIMEOUT} -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${NODE} | awk -F"<tr><td>" '{ for (i=1;i<=NF;i++) { print $i; }; }' | grep time | sed "s/</ /g" | sed "s/>/ /g" | sed "s/\// /g" | sed "s/ td / /g" | sed "s/ tr//g"`
 
 	# ALL DATA -
 	if [ ""$SHOW_RAW"" -eq 1 ]
@@ -64,7 +87,8 @@ do
 
     #echo "DEBUG: Done gathering list"
 
-    count=`expr $count + 1`
+    #count=`expr $count + 1`
+    count=$(($count+1))
 
     if [ ""$count"" = 1 ]
     then
@@ -102,8 +126,41 @@ if (NF == 3) {
 
 			##echo "DEBUG: Moving file 2 to file 1 (after delta)"
 			mv $tmp_file2 $tmp_file1
-			count=1
 		fi
+    fi
+
+
+    # See if we have to update the list of connected nodes
+    if [ ""$count"" -ge $GENERATE_NODE_LIST_MODULO ]
+    then
+	rm -f $tmp_file4 $tmp_file5
+	# Save old list
+	echo $NODE_LIST | awk '{ for (i=1;i<=NF;i++) print $i; }' > $tmp_file4
+	##echo "DEBUG: OLD_NODE_LIST: [`cat $tmp_file4`]"
+
+	# Get new node list
+	get_node_list
+
+	echo $NODE_LIST | awk '{ for (i=1;i<=NF;i++) print $i; }' > $tmp_file5
+	##echo "DEBUG: NEW_NODE_LIST: [`cat $tmp_file5`]"
+
+	##echo "DEBUG: Node-list diff: "
+	disconnects=`diff $tmp_file4 $tmp_file5 | grep "<" | sed "s/<//g" `
+	##echo "DEBUG: disconnects: [${disconnects}]"
+	connects=`diff $tmp_file4 $tmp_file5 | grep ">" | sed "s/>//g" `
+	##echo "DEBUG: connects: [${connects}]"
+	if [ -n ""`echo ${disconnects} | sed 's/ //g'`"" ]
+	then
+		echo `date`"    - DISCONNECTS: $disconnects"
+	fi
+
+	if [ -n ""`echo ${connects} | sed 's/ //g'`"" ]
+	then
+		echo `date`"    -    CONNECTS: $connects"
+	fi
+
+	# Let script know we've got a new list to work with
+	count=0
     fi
 done
 
