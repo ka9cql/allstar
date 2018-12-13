@@ -9,7 +9,8 @@
 #                      change to "SHOW_RAW" variable, below). Moved temporary files to /var/tmp
 #                      and ensured they're deleted when this command terminates. Added default
 #                      timeout to "wget" requests. Added ability to detect changes to list of
-#                      connected nodes.
+#                      connected nodes. Added process-id to tmp_file(x) filenames so we can run
+#                      multiple copies of this tool at the same time without conflict.
 ####################
 
 SHOW_RAW=0	# Set to "1" if you want to see the "raw" data for all nodes upon delta detection
@@ -42,11 +43,11 @@ then
 fi
 
 
-tmp_file1="/var/tmp/txlog.1"
-tmp_file2="/var/tmp/txlog.2"
-tmp_file3="/var/tmp/txlog.3"
-tmp_file4="/var/tmp/txlog.4"
-tmp_file5="/var/tmp/txlog.5"
+tmp_file1="/var/tmp/txlog.$$.1"
+tmp_file2="/var/tmp/txlog.$$.2"
+tmp_file3="/var/tmp/txlog.$$.3"
+tmp_file4="/var/tmp/txlog.$$.4"
+tmp_file5="/var/tmp/txlog.$$.5"
 
 trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5; exit 0" 0 1 2 3 6 12 15
 
