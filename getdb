@@ -8,24 +8,27 @@
 #
 #  2018-12-12  msipin  Created.
 #  2018-12-13  msipin  Added "-h" command-line argument to show where file ("db") gets stored.
+#                      Only delete current file if "lynx" command can be found - to ensure that
+#                      a new one can be generated! Changed name of "db" file so its purpose
+#                      will be more obvious - since it will be referenced across multiple tools!
+#                      Moved callsign to 3rd field (swapped 3rd and 4th).
 #####################################
 
 CMD="lynx"
 
-outfile=/var/tmp/nodes.db
+# Local copy of Allstar node database
+ALLSTAR_NODE_DB=/var/tmp/nodes.db
 
 
 if [ $# -ge 1 -a ""$1"" = "-h" ]
 then
 	echo
-	echo "Allstar node database location: $outfile"
+	echo "Allstar node database location: $ALLSTAR_NODE_DB"
 	echo
 	exit 1
 fi
 
 
-
-rm -f $outfile
 
 rslt=`which $CMD |&grep -v "which: no"`
 if [ -z ""$rslt"" ]
@@ -38,14 +41,24 @@ then
 	exit 2
 fi
 
+# Only remove any old one if the command(s) for building a new one can be found on this system!
+rm -f $ALLSTAR_NODE_DB
 
-###   $CMD -dump -width 500 http://stats.allstarlink.org/ | grep "Map" | grep "Bubble" | sed "s/\[[0-9]*\]/|/g" | sed "s/|Map |Bubble /|/" | sed "s/ |/|/g" | sed "s/ [0-9]*S$//" | sed "s/ [0-9]*M$//" | sed "s/ [0-9]*H$//" | sed "s/ [0-9]*D$//" | sed "s/^  |/|/" > $outfile
 
-$CMD -dump -width 500 http://stats.allstarlink.org/ | sed "s/\[[0-9]*\]/|/g" | sed "s/|Map |Bubble /|/" | sed "s/ |/|/g" | sed "s/ [0-9]*S$//" | sed "s/ [0-9]*M$//" | sed "s/ [0-9]*H$//" | sed "s/ [0-9]*D$//" | sed "s/^  |/|/" | awk -F"|" '{ if (NF > 3) print $0 }' >  $outfile
+$CMD -dump -width 500 http://stats.allstarlink.org/ | sed "s/\[[0-9]*\]/|/g" | sed "s/|Map |Bubble /|/" | sed "s/ |/|/g" | sed "s/ [0-9]*S$//" | sed "s/ [0-9]*M$//" | sed "s/ [0-9]*H$//" | sed "s/ [0-9]*D$//" | sed "s/^  |/|/" | awk -F"|" '{ if (NF > 3) print $0 }' | awk -F"|" '{
+
+for (i=2;i<=NF;i++) {
+    if (i == 3) printf "%s%s", FS, $4;
+    else if (i == 4) printf "%s%s", FS, $3;
+    else printf "%s%s", FS, $i;
+};
+printf "\n";
+
+}' >  $ALLSTAR_NODE_DB
 
 # Display how many records retrieved
 echo
-wc -l $outfile | awk '{ printf "%s records saved to %s\n", $1, $2; }'
+wc -l $ALLSTAR_NODE_DB | awk '{ printf "%s records saved to %s\n", $1, $2; }'
 echo
 
 exit 0
