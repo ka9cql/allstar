@@ -15,7 +15,7 @@
 #                      Dynamically draw/redraw "bubbles" diagram in the background when needed.
 #                      Dynamically adjust colors of nodes in "bubbles" diagram (once drawn).
 #  2018-12-14  msipin  Changed "yellow" to "lightyellow" as stop-color for "questionable" status
-#                      updates.
+#                      updates. Redirected output from "killall" to /dev/null.
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -309,7 +309,7 @@ printf "\n";
 	if [ ""$redraw_bubbles"" -eq 1 ]
 	then
 		# Terminate any other attempt to draw bubble diagram
-		killall bubbles
+		killall bubbles >/dev/null 2>/dev/null
 		sleep 2
 		# Kick off redraw of bubble map in background
 		(nohup bubbles $SEED_NODE_NUMBER >/dev/null 2>/dev/null)&
