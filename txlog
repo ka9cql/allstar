@@ -12,11 +12,19 @@
 #                      connected nodes. Added process-id to tmp_file(x) filenames so we can run
 #                      multiple copies of this tool at the same time without conflict.
 #  2018-12-13  msipin  Displayed data from Allstar-node db (if available) for each node.
+#                      Dynamically draw/redraw "bubbles" diagram in the background when needed.
+#                      Dynamically adjust colors of nodes in "bubbles" diagram (once drawn).
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
 # NOTE: THIS MUST MATCH WHAT IS SPECIFIED IN "getdb"!!
 ALLSTAR_NODE_DB=/var/tmp/nodes.db
+
+# This is the URL to the output (SVG) diagram (CAUTION: might not exist! Don't assume it does!)
+# NOTE: THIS MUST MATCH WHAT IS SPECIFIED IN "bubbles"!!
+outsvg="/srv/http/supermon/bubbles.svg"
+outsvg2="/srv/http/supermon/bubbles2.svg"
+
 
 SHOW_RAW=0	# Set to "1" if you want to see the "raw" data for all nodes upon delta detection
 
@@ -57,8 +65,78 @@ trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_db_file;
 rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_db_file
 
 
+
+bubble_diagram_nominal() {
+  # If Allstar node database exists, and non-zero-length...
+  if [ -s ""$outsvg"" ]
+  then
+	# Make all nodes in the "bubble diagram" "nominal" coloring
+	#echo "DEBUG: Making all bubbles nominal..."
+
+	# Annotations for each state -
+	#
+	# use "white:lightblue" for "nominal"
+	#    <stop offset="1" style="stop-color:lightblue;stop-opacity:1.;"/>
+	# use "white:lightyellow" for "short transmit"
+	#    <stop offset="1" style="stop-color:lightyellow;stop-opacity:1.;"/>
+	# use "white:green" for "transmit"
+	#    <stop offset="1" style="stop-color:green;stop-opacity:1.;"/>
+
+	rm -f $outsvg2
+	cat $outsvg | sed "s/stop-color:lightyellow;stop-opacity/stop-color:lightblue;stop-opacity/" | sed "s/stop-color:green;stop-opacity/stop-color:lightblue;stop-opacity/" >> $outsvg2
+	mv $outsvg2 $outsvg
+  fi
+}
+
+bubble_diagram_active() {
+  active_node=$1;
+
+  # If Allstar node database exists, and non-zero-length...
+  if [ -s ""$outsvg"" ]
+  then
+	# Mark the given node as "active"
+	#echo "DEBUG: Marking node ${active_node} active..."
+
+	# Annotations for each state -
+	#
+	# use "white:lightblue" for "nominal"
+	#    <stop offset="1" style="stop-color:lightblue;stop-opacity:1.;"/>
+	# use "white:lightyellow" for "short transmit"
+	#    <stop offset="1" style="stop-color:lightyellow;stop-opacity:1.;"/>
+	# use "white:green" for "transmit"
+	#    <stop offset="1" style="stop-color:green;stop-opacity:1.;"/>
+
+	rm -f $outsvg2
+	cat $outsvg | awk '{
+
+if ((NF == 3) && ($2 == TGT)) {
+#print "<!-- DEBUG: FOUND TGT -->"
+#           <!-- 49125 -->
+	while ((NF >= 1) && ($1 != "<stop") && ($2 != "offset=\"1\"")) {
+#           <g id="node1" class="node"><title>49125</title>
+#           <defs>
+#           <linearGradient id="l_0" gradientUnits="userSpaceOnUse" x1="-245.738" y1="124.104" x2="-9.39005" y2="124.104" >
+#           <stop offset="0" style="stop-color:white;stop-opacity:1.;"/>
+		print $0;
+		getline;
+	}
+#           <stop offset="1" style="stop-color:lightblue;stop-opacity:1.;"/>
+	print $0;
+	print "<stop offset=\"1\" style=\"stop-color:green;stop-opacity:1.;\"/>";
+	getline
+#print "<!-- DEBUG: DONE PARSING TGT -->"
+}
+else {
+    print $0;
+}
+
+	}' TGT=$active_node >> $outsvg2
+	mv $outsvg2 $outsvg
+  fi
+}
+
 get_node_list() {
-	##echo `date`"  -  DEBUG: Checking for connects/disconnects..."
+	#echo `date`"  -  DEBUG: Checking for connects/disconnects..."
 	rm -f $tmp_db_file
 	# Develop "local database" of currently-connected nodes
 	astar $SEED_NODE_NUMBER >> $tmp_db_file
@@ -125,14 +203,22 @@ if (NF == 3) {
 			##echo `date` " -    " $delta
 			echo -n `date` " -"
 
+			# Return all nodes in the "bubble diagram" to "nominal"
+			bubble_diagram_nominal
+
 			echo "$delta" | while IFS= read LINE
 			do
+
 				NODE=`echo $LINE | awk '{ print $1}'`
 				TIME=`echo $LINE | awk '{ $1=""; print $0}'`
 				###echo "DEBUG: LINE: $LINE   NODE: $NODE   TIME: $TIME"
 
 				data=`grep "^${NODE} " $tmp_db_file | awk '{ $1=""; $2=""; print $0; }'`
 				echo "  $NODE $TIME $data"
+
+				# Colorize this nodes in the "bubble diagram"
+				bubble_diagram_active $NODE
+
 			done
 
 
@@ -169,8 +255,12 @@ if (NF == 3) {
 	connects=`diff $tmp_file4 $tmp_file5 | grep ">" | sed "s/>//g" | awk '{ print $1 }'`
 	##echo "DEBUG: connects: [${connects}]"
 
+	redraw_bubbles=0
 	if [ -n ""`echo ${disconnects} | sed 's/ //g'`"" ]
 	then
+		# DO need to redraw bubbles
+		redraw_bubbles=1
+
 		echo `date`"  - DISCONNECT:"
 		for NODE2 in $disconnects
 		do
@@ -194,12 +284,25 @@ printf "\n";
 
 	if [ -n ""`echo ${connects} | sed 's/ //g'`"" ]
 	then
+		# DO need to redraw bubbles
+		redraw_bubbles=1
+
 		echo `date`"  - CONNECT:"
 		for NODE2 in $connects
 		do
 			##grep "^${NODE2} " $tmp_db_file | awk '{ $2=""; print "  + ",$0; }'
 			grep "^${NODE2} " $tmp_db_file | awk '{ $2=""; print "  + ",$0; }'
 		done
+	fi
+
+	# If need to redraw bubble map, do so (in the background)
+	if [ ""$redraw_bubbles"" -eq 1 ]
+	then
+		# Terminate any other attempt to draw bubble diagram
+		killall bubbles
+		sleep 2
+		# Kick off redraw of bubble map in background
+		(nohup bubbles $SEED_NODE_NUMBER >/dev/null 2>/dev/null)&
 	fi
 
 	# Let script know we've got a new list to work with
