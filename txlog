@@ -90,6 +90,7 @@ bubble_diagram_nominal() {
 
 bubble_diagram_active() {
   active_node=$1;
+  stop_color=$2;
 
   # If Allstar node database exists, and non-zero-length...
   if [ -s ""$outsvg"" ]
@@ -122,7 +123,7 @@ if ((NF == 3) && ($2 == TGT)) {
 	}
 #           <stop offset="1" style="stop-color:lightblue;stop-opacity:1.;"/>
 	print $0;
-	print "<stop offset=\"1\" style=\"stop-color:green;stop-opacity:1.;\"/>";
+	printf "<stop offset=\"1\" style=\"stop-color:%s;stop-opacity:1.;\"/>\n", STOP_COLOR;
 	getline
 #print "<!-- DEBUG: DONE PARSING TGT -->"
 }
@@ -130,7 +131,7 @@ else {
     print $0;
 }
 
-	}' TGT=$active_node >> $outsvg2
+	}' TGT=$active_node STOP_COLOR=$stop_color >> $outsvg2
 	mv $outsvg2 $outsvg
   fi
 }
@@ -210,14 +211,21 @@ if (NF == 3) {
 			do
 
 				NODE=`echo $LINE | awk '{ print $1}'`
-				TIME=`echo $LINE | awk '{ $1=""; print $0}'`
-				###echo "DEBUG: LINE: $LINE   NODE: $NODE   TIME: $TIME"
+				TIME=`echo $LINE | awk '{ print $2}'`
+				echo "  DEBUG: NODE: $NODE   TIME: $TIME"
 
 				data=`grep "^${NODE} " $tmp_db_file | awk '{ $1=""; $2=""; print $0; }'`
 				echo "  $NODE $TIME $data"
 
 				# Colorize this nodes in the "bubble diagram"
-				bubble_diagram_active $NODE
+				if [ ""$TIME"" -ge 7 -a ""$TIME"" -lt 240 ]
+				then
+					#echo "DEBUG: TIME green"
+					bubble_diagram_active $NODE "green"
+				else
+					#echo "DEBUG: TIME yellow"
+					bubble_diagram_active $NODE "yellow"
+				fi
 
 			done
 
