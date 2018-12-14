@@ -14,6 +14,8 @@
 #  2018-12-13  msipin  Displayed data from Allstar-node db (if available) for each node.
 #                      Dynamically draw/redraw "bubbles" diagram in the background when needed.
 #                      Dynamically adjust colors of nodes in "bubbles" diagram (once drawn).
+#  2018-12-14  msipin  Changed "yellow" to "lightyellow" as stop-color for "questionable" status
+#                      updates.
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -223,8 +225,8 @@ if (NF == 3) {
 					#echo "DEBUG: TIME green"
 					bubble_diagram_active $NODE "green"
 				else
-					#echo "DEBUG: TIME yellow"
-					bubble_diagram_active $NODE "yellow"
+					#echo "DEBUG: TIME lightyellow"
+					bubble_diagram_active $NODE "lightyellow"
 				fi
 
 			done
