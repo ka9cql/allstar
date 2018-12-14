@@ -96,7 +96,12 @@ printf "%s [label=\"%s - %s\n%s\", style=filled, fillcolor=\"white:lightblue\"];
 echo "}" >> $outdot
 
 rm -f $outsvg2
-neato -Tsvg  $outdot >> $outsvg2
+neato -Tsvg  $outdot | awk '{
+
+if ($1 == "<svg")  print $1;
+else print $0;
+
+}' >> $outsvg2
 mv $outsvg2 $outsvg
 
 
