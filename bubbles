@@ -68,7 +68,9 @@ rm -f $outdot
 ####################################
 
 cat << EOF >> $outdot
-graph {
+digraph {
+edge [dir="both"];
+concentrate=true;
 overlap=scalexy;
 splines=true;
 overlap=false;
