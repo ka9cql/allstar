@@ -1,0 +1,121 @@
+#!/bin/sh
+###################
+# gmtdate - A lame attempt to recreate the great "gmtdate.c" utility from my past...
+#
+# HISTORICAL INFORMATION -
+#
+#  2018-12-14  msipin  Recreated in shell script form because I can't find my
+#                      oh-so-awesome source code.... <sniffles>
+###################
+
+# Default to showing GMT time
+arg="-g"
+
+# If user specified any argument(s), pickup the first one to simplify the logic below
+if [ $# -gt 0 ]
+then
+	arg=$1
+fi
+
+
+if [ ""$arg"" = "-u" ]
+then
+	# Show UTC date -
+	date -u
+elif [ ""$arg"" = "-s" ]
+then
+	# Show seconds-since-epoch
+	date +"%s"
+elif [ ""$arg"" = "-t" -a $# -ge 1 ]
+then
+	# Pick up next arg, as spec for desired TZ
+		#  ET = America/New_York
+		#  CT = America/Chicago
+		#  MT = America/Denver
+		#  MST = America/Phoenix
+		#  PT = America/Los_Angeles
+		#  AK = America/Anchorage
+		#  HI = Pacific/Honolulu
+
+	extra=""
+	# Check if user specified a seconds-since-epoch to convert
+	if [ $# -ge 3 ]
+	then
+		# Presume $3 is a seconds-since-epoch
+		extra=`echo '--date=@'${3}`
+	fi
+
+	case ""$2"" in
+
+		ET )
+			TZ="America/New_York" date $extra
+			;;
+		CT )
+			TZ="America/Chicago" date $extra
+			;;
+		MT )
+			TZ="America/Denver" date $extra
+			;;
+		MST )
+			TZ="America/Phoenix" date $extra
+			;;
+		PT )
+			TZ="America/Los_Angeles" date $extra
+			;;
+		AK )
+			TZ="America/Anchorage" date $extra
+			;;
+		HI )
+			TZ="Pacific/Honolulu" date $extra
+			;;
+		* )
+			echo
+			echo "ERROR: Unknown timezone specified: $2"
+			echo
+			exit 2 ;;
+	esac
+
+elif [ ""$arg"" = "-h" ]
+then
+
+	echo
+	echo "usage: $0 [ -g | -u | -s | -t XX | -h | <number> ]"
+	echo "       where -"
+cat << EOF
+	  (no arguments) = Show GMT
+	  -g	Show GMT
+	  -u	Show UTC
+	  -s	Show seconds-since-epoch
+	  -t XX Show time in timezone (XX) where (XX) must be one of -
+		   ET = America/New_York
+		   CT = America/Chicago
+		   MT = America/Denver
+		   MST = America/Phoenix
+		   PT = America/Los_Angeles
+		   AK = America/Anchorage
+		   HI = Pacific/Honolulu
+	 
+	  -h	Show help
+	  (numeric value) = Convert from seconds-since-epoch to GMT date
+	  		    (NOTE: Can be used in conjunction with '-t XX')
+
+EOF
+	exit 2
+
+elif [ ""$arg"" = "-g" ]
+then
+	# Show GMT date -
+	TZ='Etc/GMT' date
+
+elif [ -n ""$1"" ]
+then
+	# Convert seconds since the epoch (1970-01-01 UTC) to a date
+	date `echo '--date=@'${1}`
+else
+	echo
+	echo "Error: Don't understand $0"
+	exit 2
+fi
+
+exit 0
+
