@@ -15,7 +15,8 @@
 #                      Dynamically draw/redraw "bubbles" diagram in the background when needed.
 #                      Dynamically adjust colors of nodes in "bubbles" diagram (once drawn).
 #  2018-12-14  msipin  Changed "yellow" to "lightyellow" as stop-color for "questionable" status
-#                      updates. Redirected output from "killall" to /dev/null.
+#                      updates. Redirected output from "killall" to /dev/null. Added automatic
+#                      refresh of the Allstar-node database and drawing of initial bubble diagram.
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -67,6 +68,27 @@ trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_db_file;
 rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_db_file
 
 
+draw_bubble_diagram() {
+  foreground=$1;
+
+  # Terminate any other attempt to draw bubble diagram
+  killall bubbles >/dev/null 2>/dev/null
+  sleep 2
+
+
+  # NOTE: If "$foreground" variable does not exist, or it exists and is
+  #       set to zero, draw in background
+  if [ -z ""$foreground"" -o "x"$foreground"x" = "x0x" ]
+  then
+	# Kick off redraw of bubble map in background
+	#echo "DEBUG: Kicking off redraw of bubble map in background"
+	(nohup bubbles $SEED_NODE_NUMBER >/dev/null 2>/dev/null)&
+  else
+	# Redraw bubble map in the foreground
+	#echo "DEBUG: Redrawing bubble map in the foreground"
+	bubbles $SEED_NODE_NUMBER
+  fi
+}
 
 bubble_diagram_nominal() {
   # If Allstar node database exists, and non-zero-length...
@@ -149,8 +171,24 @@ get_node_list() {
 }
 
 
+echo
+# Get database of all currently-known Allstar nodes
+echo -n "Refreshing Allstar node list..."
+getdb
+
 # Generate initial NODE_LIST
+echo -n "Getting list of connected nodes..."
 get_node_list
+
+# Draw initial bubble diagram
+echo -n "Drawing initial bubble diagram..."
+draw_bubble_diagram 1
+
+
+echo
+echo "Initialization complete!"
+echo "Processing updates..."
+echo
 
 
 count=0
@@ -305,14 +343,11 @@ printf "\n";
 		done
 	fi
 
-	# If need to redraw bubble map, do so (in the background)
+	# If need to redraw bubble map, do so in the background
 	if [ ""$redraw_bubbles"" -eq 1 ]
 	then
-		# Terminate any other attempt to draw bubble diagram
-		killall bubbles >/dev/null 2>/dev/null
-		sleep 2
-		# Kick off redraw of bubble map in background
-		(nohup bubbles $SEED_NODE_NUMBER >/dev/null 2>/dev/null)&
+		draw_bubble_diagram 0
+		redraw_bubbles=0
 	fi
 
 	# Let script know we've got a new list to work with
