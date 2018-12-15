@@ -173,21 +173,22 @@ get_node_list() {
 
 echo
 # Get database of all currently-known Allstar nodes
-echo -n "Refreshing Allstar node list..."
+echo "Refreshing Allstar node list..."
 getdb
 
 # Generate initial NODE_LIST
-echo -n "Getting list of connected nodes..."
+echo "Getting list of connected nodes..."
 get_node_list
 
 # Draw initial bubble diagram
-echo -n "Drawing initial bubble diagram..."
+echo "Drawing initial bubble diagram..."
 draw_bubble_diagram 1
 
 
 echo
 echo "Initialization complete!"
-echo "Processing updates..."
+echo
+echo "Waiting for updates..."
 echo
 
 
