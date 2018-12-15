@@ -7,12 +7,12 @@ To install or update these tools on an Arch Linux-based Allstar node (circa 2018
 1) Log into your Allstar node, and drop to the BASH shell
 
 IF THIS IS THE FIRST TIME DOING ALL OF THIS (aka "starting from scratch") -----
-      2A) cd /root
-      3A) git clone https://github.com/ka9cql/allstar.git
+2A) cd /root
+3A) git clone https://github.com/ka9cql/allstar.git
 
 IF YOU'VE DONE SOME OF THIS BEFORE, and only need to update your code to the latest -
-      2B) cd /root/allstar
-      3B) git pull
+2B) cd /root/allstar
+3B) git pull
 
 4) pacman -S lynx         (NOTE: If it says "already installed", or "already up-to-date", you can answer "n" (NO), when asked if you want to re-install it)
 5) pacman -S graphviz     (NOTE 1of2: Same as above - you don't have to re-install it if it is already installed.)
