@@ -252,7 +252,7 @@ if (NF == 3) {
 
 				NODE=`echo $LINE | awk '{ print $1}'`
 				TIME=`echo $LINE | awk '{ print $2}'`
-				echo "  DEBUG: NODE: $NODE   TIME: $TIME"
+				#echo "  DEBUG: NODE: $NODE   TIME: $TIME"
 
 				data=`grep "^${NODE} " $tmp_db_file | awk '{ $1=""; $2=""; print $0; }'`
 				echo "  $NODE $TIME $data"
