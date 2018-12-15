@@ -34,25 +34,24 @@ Continuing...
 15) cp /root/allstar/AllstarBubbleDiagram.html .      (Answer "Y" (YES) to overwrite file if it already exists)
 16) cp /root/allstar/AllstarBubbleDiagram2.html .     (Answer "Y" (YES) to overwrite file if it already exists)
 17) cd /root/allstar
-18) getdb
-19) bubbles
-20) txlog             (NOTE: LEAVE THIS PROCESS  RUNNING! - It is the one that updates the bubble diagram in real-time!)
-21) Open a web browser to this URL (substitute your Allstar node's IP address for the one shown here) - http://192.168.1.20/supermon/AllstarBubbleDiagram2.html
-22) Watch the web page automatically change when someone keys-up, unkeys, connects or disconnects.  The page will also change if one of the connected nodes reports its statistics in the background (happens sometimes) and that report "looks weird" to my scripts.
-23) To compare this drawing with that from Allstarlink.org, try the "AllstarBubbleDiagram.html" webpage (NOTE: Unlike the one in step 21, this webpage doesn't have a "2" in its name)
+18) txlog             (NOTE: LEAVE THIS PROCESS  RUNNING! - It is the one that updates the bubble diagram in real-time!)
+19) Open a web browser to this URL (substitute your Allstar node's IP address for the one shown here) - http://192.168.1.20/supermon/AllstarBubbleDiagram2.html
+20) Watch the web page automatically change when someone keys-up, unkeys, connects or disconnects.  The page will also change if one of the connected nodes reports its statistics in the background (happens sometimes) and that report "looks weird" to my scripts.
+21) To compare this drawing with that from Allstarlink.org, try the "AllstarBubbleDiagram.html" webpage (NOTE: Unlike the one in step 19, this webpage doesn't have a "2" in its name)
 
 NOTES:
 --------------
 *  Your Allstar node must have Internet connectivity in order to use the above procedure
-*  "txlog" is the process that updates the diagram mentioned in steps 21/22. If "txlog" stops, so will live updates of that diagram.
+*  "txlog" is the process that updates the diagram mentioned in steps 19/20. If "txlog" stops, so will live updates of that diagram.
 *  If you want to keep "txlog" running in the background even if you exit the shell or log off of your node, try this -
 
-    A) cd /root
-    B) (nohup /root/allstar/txlog >> /root/txlog.log 2>>/root/txlog.err) &
+1) cd /root
+2) (nohup /root/allstar/txlog >> /root/txlog.log 2>>/root/txlog.err) &
 
 * To run this software on any "non-Allstar" (or, more correctly, any non-Arch Linux-based Allstar) system, try the following changes -
 
-    A) Substitute your Linux distribution's package manager (yum, apt-get, etc) in steps 5 and 6
-    B) Substitute your webserver's content-source directory (/var/www/html, etc.) in step 14, and use a corresponding URL in step 21
+1) Substitute your Linux distribution's package manager (yum, apt-get, etc) in steps 5 and 6
+2) Substitute your webserver's content-source directory (/var/www/html, etc.) in step 14, and use a corresponding URL in steps 19 and 21
+
 
 - Mike, KA9CQL
