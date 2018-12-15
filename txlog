@@ -17,6 +17,7 @@
 #  2018-12-14  msipin  Changed "yellow" to "lightyellow" as stop-color for "questionable" status
 #                      updates. Redirected output from "killall" to /dev/null. Added automatic
 #                      refresh of the Allstar-node database and drawing of initial bubble diagram.
+#                      Printed timestamp on every "status update".
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -242,8 +243,6 @@ if (NF == 3) {
 	printf "%d\t%d\t\n", node, (after-before);
 };
 }'`
-			##echo `date` " -    " $delta
-			echo -n `date` " -"
 
 			# Return all nodes in the "bubble diagram" to "nominal"
 			bubble_diagram_nominal
@@ -256,7 +255,8 @@ if (NF == 3) {
 				#echo "  DEBUG: NODE: $NODE   TIME: $TIME"
 
 				data=`grep "^${NODE} " $tmp_db_file | awk '{ $1=""; $2=""; print $0; }'`
-				echo "  $NODE $TIME $data"
+				# Print date and then data
+				echo `date` " -  $NODE $TIME $data"
 
 				# Colorize this nodes in the "bubble diagram"
 				if [ ""$TIME"" -ge 7 -a ""$TIME"" -lt 240 ]
