@@ -13,6 +13,7 @@
 #                      will be more obvious - since it will be referenced across multiple tools!
 #                      Moved callsign to 3rd field (swapped 3rd and 4th).
 #  2018-12-18  msipin  Merge in the Allstar "asterisk node database", if found.
+#                      (ROLLED BACK - too many duplicates)
 #####################################
 
 CMD="lynx"
@@ -75,16 +76,19 @@ printf "\n";
 }' >  $ALLSTAR_NODE_DB
 
 
-rm -f $tmp_file1 $tmp_file2 $tmp_file3
-
-# If it exists, merge the "Asterisk" node database with the one we just developed
-if [ -s $ASTERISK_NODE_DB ]
+if [ 0 ]
 then
-	cat $ASTERISK_NODE_DB | sed "s/^/|/" | awk -F"|" '{ if ((NF >= 5) && ($2 != "1000")) print $0; }' | sort -u > $tmp_file1
-	diff $ALLSTAR_NODE_DB $tmp_file1 | grep "^>" | sed "s/> //" > $tmp_file2
-	cat $ALLSTAR_NODE_DB $tmp_file2 | sort -u > $tmp_file3
+	rm -f $tmp_file1 $tmp_file2 $tmp_file3
 
-	mv $tmp_file3 $ALLSTAR_NODE_DB
+	# If it exists, merge the "Asterisk" node database with the one we just developed
+	if [ -s $ASTERISK_NODE_DB ]
+	then
+		cat $ASTERISK_NODE_DB | sed "s/^/|/" | awk -F"|" '{ if ((NF >= 5) && ($2 != "1000")) print $0; }' | sed "s/|<None>|/||/" | sort -u > $tmp_file1
+		diff $ALLSTAR_NODE_DB $tmp_file1 | grep "^>" | sed "s/> //" > $tmp_file2
+		cat $ALLSTAR_NODE_DB $tmp_file2 | sort -u > $tmp_file3
+
+		mv $tmp_file3 $ALLSTAR_NODE_DB
+	fi
 fi
 
 
