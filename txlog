@@ -298,6 +298,11 @@ if (NF == 3) {
 	echo $NODE_LIST | awk '{ for (i=1;i<=NF;i++) print $i; }' > $tmp_file5
 	##echo "DEBUG: NEW_NODE_LIST: [`cat $tmp_file5`]"
 
+	## 2018-12-19  NOTE: There is a flaw in the detection logic below. If the nodes
+	##             reorganize their interconnections, yet continue to consist of the
+	##             exact same members, the logic below will not detect this change
+	##             in connectivity, and will not redraw the bubble diagram (graph).
+
 	##echo "DEBUG: Node-list diff: "
 	disconnects=`diff $tmp_file4 $tmp_file5 | grep "<" | sed "s/<//g" | awk '{ print $1 }'`
 	##echo "DEBUG: disconnects: [${disconnects}]"
