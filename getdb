@@ -12,12 +12,27 @@
 #                      a new one can be generated! Changed name of "db" file so its purpose
 #                      will be more obvious - since it will be referenced across multiple tools!
 #                      Moved callsign to 3rd field (swapped 3rd and 4th).
+#  2018-12-18  msipin  Merge in the Allstar "asterisk node database", if found.
 #####################################
 
 CMD="lynx"
 
 # Local copy of Allstar node database
 ALLSTAR_NODE_DB=/var/tmp/nodes.db
+
+# (Possible) Local copy of "asterisk node database" (NOTE: MIGHT NOT EXIST!)
+# TO-DO: IF FILE EXISTS - Stick a pipe ("|") character at the beginning of the line, 
+#        and "join" this with ALLSTAR_NODE_DB contents for a "more complete" list.
+ASTERISK_NODE_DB=/var/log/asterisk/astdb.txt
+
+
+tmp_file1="/var/tmp/blah1.out"
+tmp_file2="/var/tmp/blah2.out"
+tmp_file3="/var/tmp/blah3.out"
+
+
+trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3; exit 0" 0 1 2 3 6 12 15
+
 
 
 if [ $# -ge 1 -a ""$1"" = "-h" ]
@@ -44,6 +59,9 @@ fi
 # Only remove any old one if the command(s) for building a new one can be found on this system!
 rm -f $ALLSTAR_NODE_DB
 
+rm -f $tmp_file1 $tmp_file2 $tmp_file3
+
+
 
 $CMD -dump -width 500 http://stats.allstarlink.org/ | sed "s/\[[0-9]*\]/|/g" | sed "s/|Map |Bubble /|/" | sed "s/ |/|/g" | sed "s/ [0-9]*S$//" | sed "s/ [0-9]*M$//" | sed "s/ [0-9]*H$//" | sed "s/ [0-9]*D$//" | sed "s/^  |/|/" | awk -F"|" '{ if (NF > 3) print $0 }' | awk -F"|" '{
 
@@ -55,6 +73,20 @@ for (i=2;i<=NF;i++) {
 printf "\n";
 
 }' >  $ALLSTAR_NODE_DB
+
+
+rm -f $tmp_file1 $tmp_file2 $tmp_file3
+
+# If it exists, merge the "Asterisk" node database with the one we just developed
+if [ -s $ASTERISK_NODE_DB ]
+then
+	cat $ASTERISK_NODE_DB | sed "s/^/|/" | awk -F"|" '{ if ((NF >= 5) && ($2 != "1000")) print $0; }' | sort -u > $tmp_file1
+	diff $ALLSTAR_NODE_DB $tmp_file1 | grep "^>" | sed "s/> //" > $tmp_file2
+	cat $ALLSTAR_NODE_DB $tmp_file2 | sort -u > $tmp_file3
+
+	mv $tmp_file3 $ALLSTAR_NODE_DB
+fi
+
 
 # Display how many records retrieved
 echo
