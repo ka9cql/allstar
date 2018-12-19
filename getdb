@@ -76,7 +76,7 @@ printf "\n";
 }' >  $ALLSTAR_NODE_DB
 
 
-if [ 0 ]
+if 0
 then
 	rm -f $tmp_file1 $tmp_file2 $tmp_file3
 
