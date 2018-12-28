@@ -1,0 +1,248 @@
+#!/bin/bash
+#
+# downloadnews v1.00 - Kyle Krieg AA0Z, Mike Sipin KA9CQL 2018-12-27
+#
+# Includes voice messages before play, at breaks, and after play.
+# This script can be configured for global playback! 
+# DO NOT run this on a multi-node connected circuit without consideration. 
+# Change MODE to localplay for strictly local node play.
+#
+# This code is written to work on the hamvoip.org BBB/RPi2 Allstar releases
+# All required packages are pre-installed on those systems.
+# 
+# For proper operation holdofftelem in rpt.conf should either not be defined or
+# defined as =0  This stops keyups from delaying the news during its playing
+#
+# You can run this script from a cron job or from the command line at least
+# 15 minutes before the defined run time (TIME value) but it can be scheduled
+# anytime within 24 hours prior to the run time.
+#
+# cron example -
+#
+# Prime news for play every Tuesday at 8:30PM - actual playtime set by defined 
+# comand line TIME parameter. If Playtime is 9PM (2100) 
+# This would send pre warnings at 8:50 and 8:55 PM. 
+#
+# Start a cron job every tuesday at 8:30 PM to run at 9 PM the same day
+# and play ARRL news on node 40000, globally
+#
+# 30 20 * * 2 /etc/asterisk/playnewstest ARRL 21:00 G 40000 &> /dev/null 2>&1
+#
+# Play ARN news on Thursday at 7PM on default node, Start playnewstest at 6 PM, Play locally
+#
+# 00 18 * * 4 /etc/asterisk/playnewstest ARN 19:00 L &> /dev/null 2>&1
+
+# The audio files ARRLstart5, ARRLstart10, ARRLstart, ARRLcontinue, ARRLstop
+# and ARNstart, ARNstart10, ARNstart, ARNcontinue, ARNstop
+# are supplied but could be customized for your needs. The audio
+# files must be in the directory defined by VOICEDIR
+#
+# ARRLstart10 or ARNstart10   - voice message at ten minutes before start
+# ARRLstart5 or ARNstart5     - voice message at five minutes before start
+# ARRLstart or ARNstart       - voice message at start of play
+# ARRLcontinue or ARNcontinue - voice message at breaks
+# ARRLstop or ARNstop         - voice message at end of play
+#
+# V1.00 - Taken from playnews v0.11 by WA3DSP circa 06/2017
+#
+#   DO NOT use the the "NOW" time parameter in a cron !!!
+
+script_dir=$(dirname "$0")
+if [ ! -f "$script_dir/playnews.ini" ]
+     then
+        echo -e "\nplaynews.ini file missing\n"
+        exit 1
+     else
+        source "$script_dir/playnews.ini"
+fi
+
+# The following variable needs to be set if different for your install
+#
+# VOICEDIR - Directory for playnews voice files
+# Usually in the same directory as the playnews script
+
+VOICEDIR="/etc/asterisk/local/playnews"
+
+# TMPDIR - Directory for temporary file storage
+# Note if at all possible this should not be on the SD card.
+# Use of /tmp or a USB mounted stick is preferred
+# Note that the BBB may not have enough memory in /tmp to process
+
+TMPDIR="/tmp" 
+
+# End User defines
+
+# 2018-12-27 msipin - Is the following a bug? Shouldn't the filename be "ARNstart.ul"?
+if [ ! -s $VOICEDIR/ARNstart ]
+  then
+    echo "playnews voice files not found - check VOICEDIR in script"
+    exit 4
+fi
+
+# NEWSTYPE is either ARRL or ARN, Always required as parameter 1
+#
+if [ -z "$1" ]
+  then
+     echo "No Play type given - ARN or ARRL"
+     exit 2
+  else
+     NEWSTYPE=${1^^}
+     if [ "$NEWSTYPE" != "ARN" ] && [ "$NEWSTYPE" != "ARRL" ]
+        then 
+           echo "Play type must be ARRL or ARN"
+           exit 3
+     fi
+fi
+
+# Mode - 'localplay' or 'playback' (global)
+# 'localplay' only plays on the node specified
+# 'playback' plays on the specified node and ALL nodes connected to it
+#
+if [ -z $3 ]
+   then 
+     MODE="playback"
+   elif
+     [ ${3^^} == "L" ]
+       then
+         MODE="localplay"
+   elif
+     [ ${3^^} == "G" ]
+       then
+         MODE="playback"
+   else
+     echo "Wrong mode type - L for Local play, G or null for global play"
+     exit 5
+fi
+
+if [ $MODE == "playback" ]
+   then
+     MODETYPE="(global)"
+   else
+     MODETYPE="(local)"
+fi
+
+
+# Node number to play on or from (if not provided, uses environment variable $NODE1)
+NODE=$NODE1
+#
+if [[ ! $4 =~ ^-?[0-9]+$ ]]
+  then
+    echo "Node number defaulting to $NODE" 
+  else
+     NODE=$4
+fi
+
+
+# Time to start - 24 hour time - required 2nd command line parameter
+# Time example 03:19 = 3:19 AM, 22:45 = 10:45 PM 
+#
+if [ ""${2^^}"" != "NOW" ] && [[ !  $2 =~ ^[0-9][0-9]:[0-9][0-9]$ ]]
+  then
+    echo "No Time supplied - Enter 24 hour time to play as 00:00 - (7 PM = 19:00)"
+    exit 6
+fi
+TIME=$2
+
+if [ ${TIME^^} != "NOW" ]
+then
+
+echo "$NEWSTYPE news will start at $TIME and use $MODE $MODETYPE mode on"
+echo "node - $NODE  with 5 and 10 minute pre-warnings"
+ 
+# Last warning time - 5 minutes before
+TIME5=`date --date "$TIME now 5 minutes ago" +%H:%M`
+# First warning time - 10 minutes before
+TIME10=`date --date "$TIME now 10 minutes ago" +%H:%M`
+
+# Wait and Send 10 minute announcement
+echo "Waiting to send 10 minute warning"
+while [ $(date +%H:%M) != $TIME10 ]; do sleep 1; done
+   # Start 10 minute message, add 3 second delay to beginning
+   cat $VOICEDIR/silence3.ul "$VOICEDIR/${NEWSTYPE}start10.ul" > $TMPDIR/news.ul
+   /usr/bin/asterisk -rx "rpt $MODE $NODE $TMPDIR/news"
+
+# Wait Send 5 minute announcement
+echo "Waiting to send 5 minute warning"
+while [ $(date +%H:%M) != $TIME5 ]; do sleep 1; done
+   # Start 5 minute message, add 3 second delay to beginning
+   cat $VOICEDIR/silence3.ul "$VOICEDIR/${NEWSTYPE}start5.ul" > $TMPDIR/news.ul
+   /usr/bin/asterisk -rx "rpt $MODE $NODE $TMPDIR/news"
+
+# wait for start time
+echo "Waiting for start time"
+while [ $(date +%H:%M) != $TIME ]; do sleep 1; done
+
+else
+
+echo "$NEWSTYPE news will start $TIME and use $MODE $MODETYPE mode on node - $NODE"
+# echo -n "Press any key to start news..."
+# read -n 1 
+
+fi
+
+# send ID
+/usr/bin/asterisk -rx "rpt fun $NODE *80"
+echo
+echo "Starting in 10 seconds - Hit Ctrl C to interrupt"
+for (( X=10; X >= 1; X-- ))
+do
+     echo -n "$X "
+     sleep 1
+done
+echo
+
+# send start announcment
+# Add 3 second delay to beginning of text
+cat $VOICEDIR/silence3.ul "$VOICEDIR/${NEWSTYPE}start.ul" > $TMPDIR/news.ul
+/usr/bin/asterisk -rx "rpt $MODE $NODE $TMPDIR/news"
+
+sleep 10
+
+
+START=0
+
+## 2018-12-27 msipin - See warning, below, about changing the value that INCREMENT gets set to here -
+# 5 minutes = 300 seconds
+INCREMENT=300
+# Calculate number of segments
+MAXPART=`ls /tmp/news.part*.ul | wc -l`
+PART="1"
+#echo $MAXPART
+
+## 2018-12-27 msipin - There seems to be a bug below - the argument to "sleep" is hard-coded to 325
+##                     seconds, which may or may not correspond to the value that INCREMENT was set to a
+##                     few lines above. It also may not correspond to the value that INCREMENT was set to
+##                     in the file that created the news audiofile sections ("downloadnews").
+##                     I AM NOT GOING TO TOUCH the code below, but you have been warned...
+
+# Start news
+PART="1"
+while [ "$PART" -le "$MAXPART" ]; do
+      echo "Playing file $TMPDIR/news.part$PART.ul"
+      if [ "$PART" -lt  "$MAXPART" ]; then 
+         # Add Station break message with 1 second delay
+         cat $TMPDIR/news.part$PART.ul $VOICEDIR/silence1.ul > $TMPDIR/news.ul  
+         /usr/bin/asterisk -rx "rpt $MODE $NODE $TMPDIR/news"
+         # Break after every section, plus a 5 second delay to let the carrier drop
+         LENGTH=`soxi -D $TMPDIR/news.ul 2>/dev/null`
+         DELAY=${LENGTH/.*} 
+         let "DELAY += 5"
+         sleep $DELAY
+      else
+         # Append end message with 2 second delay
+         cat $TMPDIR/news.part$PART.ul $VOICEDIR/silence2.ul "$VOICEDIR/${NEWSTYPE}stop.ul" > $TMPDIR/news.ul
+         /usr/bin/asterisk -rx "rpt $MODE $NODE $TMPDIR/news"
+         # Terminate script at end of audio
+         LENGTH=`soxi -D $TMPDIR/news.ul 2>/dev/null`
+         DELAY=${LENGTH/.*} 
+         sleep $DELAY
+      fi
+      let "PART += 1"
+done
+
+# Remove all files created by playnewstest
+rm -f $TMPDIR/news.ul $TMPDIR/news.part*.ul
+
+# Done
+exit 0
+

@@ -1,0 +1,155 @@
+#!/bin/bash
+#
+# downloadnews v1.00 - Kyle Krieg AA0Z, Mike Sipin KA9CQL 2018-12-27
+#
+# Script to download ARRL News or ARN and divide into 2.5 minute segments with breaks.
+#
+# This code is written to work on the hamvoip.org BBB/RPi2 Allstar releases
+# All required packages are pre-installed on those systems.
+# 
+# You can run this script from a cron job or from the command line.
+#
+# cron example -
+#
+# Download audio every Tuesday at 8:30PM
+#
+# 30 20 * * 2 /etc/asterisk/downloadnews ARRL &> /dev/null 2>&1
+#
+# Download ARN news on Thursday at 7PM
+#
+# 00 18 * * 4 /etc/asterisk/downloadnews ARN &> /dev/null 2>&1
+#
+#
+#
+
+# V1.00 - Taken from playnews v0.11 by WA3DSP circa 06/2017
+#
+
+script_dir=$(dirname "$0")
+if [ ! -f "$script_dir/playnews.ini" ]
+     then
+        echo -e "\nplaynews.ini file missing\n"
+        exit 1
+     else
+        source "$script_dir/playnews.ini"
+fi
+
+# TMPDIR - Directory for temporary file storage
+# Note if at all possible this should not be on the SD card.
+# Use of /tmp or a USB mounted stick is preferred
+# Note that the BBB may not have enough memory in /tmp to process
+
+TMPDIR="/tmp" 
+
+# End User defines
+
+
+# Remove possible artifacts from previous runs
+rm -f $TMPDIR/news.mp3 $TMPDIR/news2.wav $TMPDIR/news.part*.wav $TMPDIR/news.part*.ul
+
+
+
+# NEWSTYPE is either ARRL or ARN, Always required as parameter 1
+#
+if [ -z "$1" ]
+  then
+     echo "No Play type given - ARN or ARRL"
+     exit 2 
+  else
+     NEWSTYPE=${1^^}
+     if [ "$NEWSTYPE" != "ARN" ] && [ "$NEWSTYPE" != "ARRL" ]
+        then 
+           echo "Play type must be ARRL or ARN"
+           exit 3
+     fi
+fi
+
+# Download Newsline or ARRL  and convert to wav
+echo "Starting Download of $NEWSTYPE Audio News @ $(date +%H:%M:%S)"
+
+# Default NEWS_URS to "not found" URL (in case .ini file isn't setup correctly)
+NEWS_URL="http://localhost/404.html"
+
+# ARN_URL and ARRL_URL are set in playnews.ini
+if [ $NEWSTYPE == "ARN" ]
+  then 
+     NEWS_URL="$ARN_URL"
+  else
+# not ARN so get ARRL
+     NEWS_URL="$ARRL_URL"
+fi
+
+# Retrieve the audio from the appropriate URL
+# Timeout set to 15 seconds with 4 retries. Set the timeout longer for slow circuits.
+rm -f $TMPDIR/news.mp3
+wget -T 15 --tries=4 -O $TMPDIR/news.mp3 $NEWS_URL 
+
+
+if [ -s $TMPDIR/news.mp3 ];
+ then
+ echo "Download complete @ $(date +%H:%M:%S)"
+else
+ echo "Download failed"
+ exit 4
+fi
+
+# On holidays ARRL does not put out a news MP3. Instead there is a 
+# shorter HTML file. The following routine checks for this and
+# exits if there is no valid MP3 file.
+
+filesize=$(wc -c <$TMPDIR/news.mp3)
+if [ $filesize -lt 100000 ]
+ then
+    echo "File size too small for play"
+    exit 5
+fi
+
+echo "Converting from MP3 to individual ulaw format files"
+
+rm -f $TMPDIR/news2.wav
+lame -h --decode $TMPDIR/news.mp3 $TMPDIR/news2.wav &> /dev/null 2>&1
+# Get the length of the file in seconds
+LENGTH=`soxi -D $TMPDIR/news2.wav`
+#echo $LENGTH
+START=0
+rm -f $TMPDIR/news.mp3
+
+## 2018-12-27 msipin - See warning, below, about changing the value that INCREMENT gets set to here -
+# 5 minutes = 300 seconds
+INCREMENT=300
+
+# Calculate number of segments
+MAXPART=`echo $LENGTH/$INCREMENT | bc` 
+let "MAXPART += 1"
+PART="1"
+#echo $MAXPART
+
+## 2018-12-27 msipin - There seems to be a bug below - the value that "INCREMENT" gets set to below is hard-coded
+##                     at 305, which overrides the value INCREMENT was set to a few lines above.
+##                     I AM NOT GOING TO TOUCH the code below, but you have been warned...
+
+rm -f $TMPDIR/news.part*.wav
+# Divide into segments
+while [ "$PART" -le "$MAXPART" ]; do
+      sox --temp $TMPDIR $TMPDIR/news2.wav $TMPDIR/news.part$PART.wav trim $START $INCREMENT &> /dev/null 2>&1
+      echo "Creating $TMPDIR/news.part$PART.wav"
+      INCREMENT=305
+      START=$(($START-5+$INCREMENT))
+#     echo "$PART - $START - $INCREMENT  $(($START+$INCREMENT))"
+      let "PART += 1"
+done
+rm -f $TMPDIR/news2.wav
+
+rm -f $TMPDIR/news.part*.ul
+# Convert each segment to ulaw
+PART="1"
+while [ "$PART" -le "$MAXPART" ]; do
+      sox --temp $TMPDIR -V $TMPDIR/news.part$PART.wav -r 8000 -c 1 -t ul $TMPDIR/news.part$PART.ul &> /dev/null 2>&1
+      echo "Converting to $TMPDIR/news.part$PART.ul"
+      rm $TMPDIR/news.part$PART.wav
+      let "PART += 1"
+done
+
+# Done
+exit 0
+
