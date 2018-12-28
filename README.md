@@ -31,7 +31,7 @@ Continuing...
 12) ln -s /root/allstar/getdb .     (It's OK if it says "file already exists")
 13) ln -s /root/allstar/gmtdate .   (It's OK if it says "file already exists")
 14) ln -s /root/allstar/txlog .     (It's OK if it says "file already exists")
-15) cd /etc/asterisk
+15) cd /etc/asterisk/local/playnews        (Create this directory if it doesn't exist, and then "cd" into it)
 16) ln -s /root/allstar/downloadnews .     (It's OK if it says "file already exists")
 17) ln -s /root/allstar/playnewstest .     (It's OK if it says "file already exists")
 18) cd /srv/http/supermon
