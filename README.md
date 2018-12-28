@@ -24,7 +24,7 @@ Continuing...
 6) pacman -S graphviz     (NOTE 1of2: Same as above - you don't have to re-install it if it is already installed.)
                           (NOTE 2of2: If it gives you a choice of where to grab this package from, you can accept the default)
 7) cd /root/allstar
-8) chmod 755 astar bubbles getdb txlog
+8) chmod 755 astar bubbles getdb txlog gmtdate downloadnews playnewstest
 9) cd /usr/local/bin
 10) ln -s /root/allstar/astar .     (It's OK if it says "file already exists")
 11) ln -s /root/allstar/bubbles .   (It's OK if it says "file already exists")
