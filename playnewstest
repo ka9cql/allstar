@@ -201,19 +201,10 @@ sleep 10
 
 START=0
 
-## 2018-12-27 msipin - See warning, below, about changing the value that INCREMENT gets set to here -
-# 5 minutes = 300 seconds
-INCREMENT=300
 # Calculate number of segments
 MAXPART=`ls /tmp/news.part*.ul | wc -l`
 PART="1"
 #echo $MAXPART
-
-## 2018-12-27 msipin - There seems to be a bug below - the argument to "sleep" is hard-coded to 325
-##                     seconds, which may or may not correspond to the value that INCREMENT was set to a
-##                     few lines above. It also may not correspond to the value that INCREMENT was set to
-##                     in the file that created the news audiofile sections ("downloadnews").
-##                     I AM NOT GOING TO TOUCH the code below, but you have been warned...
 
 # Start news
 PART="1"
