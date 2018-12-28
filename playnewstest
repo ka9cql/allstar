@@ -241,7 +241,7 @@ while [ "$PART" -le "$MAXPART" ]; do
 done
 
 # Remove all files created by playnewstest
-rm -f $TMPDIR/news.ul $TMPDIR/news.part*.ul
+rm -f $TMPDIR/news.ul
 
 # Done
 exit 0
