@@ -9,7 +9,15 @@ rev 2.00 12/28/2018  msipin/epowell Completely refactored sensor-reading and cyc
 #include <stdint.h>
 #include <time.h>
 
-#define INCLUDE_DB	1	/* Set to 0 if do *NOT* want to include DB code, 1 if you *DO* */
+#define INCLUDE_DB	1	/* Set to 0 if do *NOT* want to include DB code (like when testing, only), 1 if you *DO* want all readings stored in the database */
+#define DHT_TYPE	1	/* Type of DHT sensor being used - 0 = DHT11, 1 = DHT21 or DHT22 */
+#define DHTPIN		7	/* WiringPi (physical) pin the sensor's data line is connected to */
+#define CYCLETIME       30	/* Modulo to minutehand - in "Production mode" only displays when (minutes % this) == 0 */
+				/*  In "Test mode" only displays when (seconds % this) == 0 */
+#define PRODUCTION_MODE	1	/* Whether to build code for "production" or testing - 1 = "real"/"Production use", 0 = for testing */
+				/* "Test" shows debugging output, and makes the cycle time MUCH shorter (seconds -vs- minutes) */
+				/* "Production" eliminates most output, and waits CYCLETIME minutes between readings */
+
 
 #if INCLUDE_DB
 #include <mysql/mysql.h>
@@ -19,15 +27,6 @@ rev 2.00 12/28/2018  msipin/epowell Completely refactored sensor-reading and cyc
 
 
 #define MAXTIMINGS	85
-#define DHTPIN		7
-#define CYCLETIME       30	// Modulo to minutehand - in "Production mode" only displays when (minutes % this) == 0
-				//  In "Test mode" only displays when (seconds % this) == 0
-
-#define PRODUCTION_MODE	1	// 1 = Production mode, 0 = TEST mode
-
-
-#define DHT_TYPE	1	// 0 = DHT11, 1 = DHT21 or DHT22
-
 
 #define STATE_WAIT_FOR_TIMER	0	/* Waiting for timer to elapse */
 #define STATE_TAKE_READING	1	/* Timer has elapsed, and need to take a reading ASAP */
