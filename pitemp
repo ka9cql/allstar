@@ -4,20 +4,45 @@
 # Author: Vivek Gite <www.cyberciti.biz> under GPL v2.x+
 # -------------------------------------------------------
 
-LOG_FORMAT="N"
+LOG_FORMAT=0
+SHOW_HEADER=1
+DAEMON=0
 
-if [ $# -ge 1 ]
-then
+HEADER="date_time_GMT_offset,hostname,GPU_temp_C,C,GPU_temp_F,F,CPU_temp_C,C,CPU_temp_F,F"
+
+usage()
+{
+	echo
+	echo "usage: $0 [ -l | -d | -h ]"
+	echo
+	echo "where:  -l (optional) displays output in logfile format"
+	echo "        -d (optional) runs program continually (daemon)"
+	echo "        -h (optional) shows this help information "
+	echo
+	exit 2
+}
+
+while [ $# -ge 1 ]
+do
 	if [ ""$1"" = "-l" ]
 	then
-		LOG_FORMAT="Y"
+		LOG_FORMAT=1
+
+	elif [ ""$1"" = "-d" ]
+	then
+		DAEMON=1
+	elif [ ""$1"" = "-h" ]
+	then
+		usage
+		exit 1
 	else
 		echo
 		echo "Error: Invalid argument to $0 - [$1]"
 		echo
 		exit 2
 	fi
-fi
+	shift
+done
 
 # Get CPU and GPU temperatures
 cpu_C=`cat /sys/class/thermal/thermal_zone0/temp | awk '{ printf "%3.1f", $1/1000; }'`
@@ -26,17 +51,33 @@ gpu_C=`sudo /opt/vc/bin/vcgencmd measure_temp | awk -F"=" '{ print $2 }' | awk -
 gpu_F=`echo ${gpu_C} | awk '{ printf "%4.1f", ($1 *9.0/5.0 + 32.0); }'`
 
 
-if [ $LOG_FORMAT = "Y" ]
-then
-	echo "$(date --rfc-3339=seconds),$(hostname),${gpu_C},C,${gpu_F},F,${cpu_C},C,${cpu_F},F"
-else
-	echo
-	echo "$(date) @ $(hostname)"
-	echo "-------------------------------------------"
-	echo "GPU temp: ${gpu_C} C    ${gpu_F} F"
-	echo "CPU temp: ${cpu_C} C    ${cpu_F} F"
-	echo
-fi
+while [ 1 ]
+do
+	if [ $LOG_FORMAT = 1 ]
+	then
+		if [ $SHOW_HEADER = 1 ]
+		then
+			echo $HEADER
+			SHOW_HEADER=0
+		fi
+
+		echo "$(date --rfc-3339=seconds),$(hostname),${gpu_C},C,${gpu_F},F,${cpu_C},C,${cpu_F},F"
+	else
+		echo
+		echo "$(date) @ $(hostname)"
+		echo "-------------------------------------------"
+		echo "GPU temp: ${gpu_C} C    ${gpu_F} F"
+		echo "CPU temp: ${cpu_C} C    ${cpu_F} F"
+		echo
+	fi
+
+	if [ ""$DAEMON"" = 1 ]
+	then
+		sleep 60
+	else
+		break
+	fi
+done
 
 exit 0
 
