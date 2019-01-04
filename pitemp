@@ -3,12 +3,17 @@
 # Purpose: Display the ARM CPU and GPU  temperature of Raspberry Pi 2/3
 # Author: Vivek Gite <www.cyberciti.biz> under GPL v2.x+
 # -------------------------------------------------------
+
+cpu_C=`cat /sys/class/thermal/thermal_zone0/temp | awk '{ printf "%3.1f", $1/1000; }'`
+cpu_F=`echo ${cpu_C} | awk '{ printf "%4.1f", ($1 *9.0/5.0 + 32.0); }'`
+gpu_C=`sudo /opt/vc/bin/vcgencmd measure_temp | awk -F"=" '{ print $2 }' | awk -F"'" '{ print $1 }'`
+gpu_F=`echo ${gpu_C} | awk '{ printf "%4.1f", ($1 *9.0/5.0 + 32.0); }'`
+
 echo
-cpu=$(</sys/class/thermal/thermal_zone0/temp)
 echo "$(date) @ $(hostname)"
 echo "-------------------------------------------"
-echo "GPU => "`sudo /opt/vc/bin/vcgencmd measure_temp | awk -F"=" '{ print $2 }'`
-echo "CPU => $((cpu/1000))'C"
+echo "GPU temp: ${gpu_C} C    ${gpu_F} F"
+echo "CPU temp: ${cpu_C} C    ${cpu_F} F"
 echo
 
 exit 0
