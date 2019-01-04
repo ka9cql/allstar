@@ -26,22 +26,27 @@ Continuing...
 7) cd /root/allstar
 8) chmod 755 astar bubbles getdb txlog gmtdate downloadnews playnewstest
 9) cd /usr/local/bin
-10) ln -s /root/allstar/astar .     (It's OK if it says "file already exists")
-11) ln -s /root/allstar/bubbles .   (It's OK if it says "file already exists")
-12) ln -s /root/allstar/getdb .     (It's OK if it says "file already exists")
-13) ln -s /root/allstar/gmtdate .   (It's OK if it says "file already exists")
-14) ln -s /root/allstar/txlog .     (It's OK if it says "file already exists")
-15) cd /etc/asterisk/local/playnews        (Create this directory if it doesn't exist, and then "cd" into it)
-16) ln -s /root/allstar/downloadnews .     (It's OK if it says "file already exists")
-17) ln -s /root/allstar/playnewstest .     (It's OK if it says "file already exists")
-18) cd /srv/http/supermon
-19) cp /root/allstar/AllstarBubbleDiagram.html .      (Answer "Y" (YES) to overwrite file if it already exists)
-20) cp /root/allstar/AllstarBubbleDiagram2.html .     (Answer "Y" (YES) to overwrite file if it already exists)
-21) cd /root/allstar
-22) txlog             (NOTE: LEAVE THIS PROCESS  RUNNING! - It is the one that updates the bubble diagram in real-time!)
-23) Open a web browser to this URL (substitute your Allstar node's IP address for the one shown here) - http://192.168.1.20/supermon/AllstarBubbleDiagram2.html
-24) Watch the web page automatically change when someone keys-up, unkeys, connects or disconnects.  The page will also change if one of the connected nodes reports its statistics in the background (happens sometimes) and that report "looks weird" to my scripts.
-25) To compare this drawing with that from Allstarlink.org, try the "AllstarBubbleDiagram.html" webpage (NOTE: Unlike the previous one, this webpage doesn't have a "2" in its name)
+10) Make commands available to all users -
+    a) ln -s /root/allstar/astar .     (It's OK if it says "file already exists")
+    b) ln -s /root/allstar/bubbles .   (It's OK if it says "file already exists")
+    c) ln -s /root/allstar/getdb .     (It's OK if it says "file already exists")
+    d) ln -s /root/allstar/gmtdate .   (It's OK if it says "file already exists")
+    e) ln -s /root/allstar/txlog .     (It's OK if it says "file already exists")
+    f) ln -s /root/allstar/pitemp .    (It's OK if it says "file already exists")
+11) cd /etc/asterisk/local/playnews        (Create this directory if it doesn't exist, and then "cd" into it)
+12) Make files available to Allstar/cron -
+    a) ln -s /root/allstar/downloadnews .     (It's OK if it says "file already exists")
+    b) ln -s /root/allstar/playnewstest .     (It's OK if it says "file already exists")
+13) cd /srv/http/supermon
+14) Make files available to Apache -
+    a) cp /root/allstar/AllstarBubbleDiagram.html .      (Answer "Y" (YES) to overwrite file if it already exists)
+    b) cp /root/allstar/AllstarBubbleDiagram2.html .     (Answer "Y" (YES) to overwrite file if it already exists)
+15) cd /root/allstar
+16) txlog             (NOTE: LEAVE THIS PROCESS  RUNNING! - It is the one that updates the bubble diagram in real-time!)
+17) Open a web browser to this URL (substitute your Allstar node's IP address for the one shown here) - http://192.168.1.20/supermon/AllstarBubbleDiagram2.html
+18) Watch the web page automatically change when someone keys-up, unkeys, connects or disconnects.  The page will also change if one of the connected nodes reports its statistics in the background (happens sometimes) and that report "looks weird" to these scripts.
+19) To compare this drawing with that from Allstarlink.org, try the "AllstarBubbleDiagram.html" webpage (NOTE: Unlike the one in step 17, this webpage doesn't have a "2" in its name)
+
 
 NOTES:
 --------------
@@ -56,8 +61,8 @@ NOTES:
 
 * To run this software on any "non-Allstar" (or, more correctly, any non-Arch Linux-based Allstar) system, try the following changes -
 
-1) Substitute your Linux distribution's package manager (yum, apt-get, etc) for the Arch Linux "pacman" package manager mentioned above.
-2) Substitute your webserver's content-source directory (/var/www/html, etc.) in step 18, and adjust the URLs used to display the webpages above to match
+1) Substitute your Linux distribution's package manager (yum, apt-get, etc) for the Arch Linux "pacman" package manager mentioned in steps 5/6, above.
+2) Substitute your webserver's content-source directory (/var/www/html, etc.) in step 13, and adjust the URLs used to display the webpages in steps 17 and 19 to match
 
 
 - Mike, KA9CQL
