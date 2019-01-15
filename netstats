@@ -1,0 +1,47 @@
+#!/usr/bin/python
+"""
+ netstats - Continuously Display transmit and receive KB/s statistics on the given interfaces
+"""
+
+import time
+
+def getIfaceStats(dev, direction):
+    """Return the current stats from a interface under linux
+    dev: devicename
+    direction: rx (received) or tx (sent)
+    """
+    path = "/sys/class/net/{}/statistics/{}_bytes".format(dev, direction)
+    f = open(path, "r")
+    bytes = int(f.read())
+    f.close()
+    return (bytes)
+
+# Interfaces to report stats on -
+devnames = { "eth0", "wlan0" }
+
+timestep = 2 # Seconds
+
+rx_bytes_before = { }
+tx_bytes_before = { }
+rx_bytes_after = { }
+tx_bytes_after = { }
+
+print()
+
+for devname in devnames:
+	rx_bytes_before[devname] = getIfaceStats(devname, "rx")
+	tx_bytes_before[devname] = getIfaceStats(devname, "tx")
+
+while ( 1 ):
+	time.sleep(timestep)
+
+	for devname in devnames:
+		rx_bytes_after[devname] = getIfaceStats(devname, "rx")
+		tx_bytes_after[devname] = getIfaceStats(devname, "tx")
+
+		print("%-6s  RX: %5.1f Kbps   TX: %5.1f Kbps" % (devname, ((rx_bytes_after[devname] - rx_bytes_before[devname])/1024)/timestep, ((tx_bytes_after[devname] - tx_bytes_before[devname])/1024)/timestep))
+
+		rx_bytes_before[devname] = rx_bytes_after[devname]
+		tx_bytes_before[devname] = tx_bytes_after[devname]
+	print()
+

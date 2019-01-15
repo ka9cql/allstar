@@ -18,6 +18,9 @@
 #                      updates. Redirected output from "killall" to /dev/null. Added automatic
 #                      refresh of the Allstar-node database and drawing of initial bubble diagram.
 #                      Printed timestamp on every "status update".
+#  2019-01-15  msipin  Tried to adapt to failures in getting data from stats.allstar.org. Only
+#                      cleared node colors once per status-update loop (in case multiple nodes
+#                      transmitted since last update).
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -214,6 +217,9 @@ do
 
     #echo "DEBUG: Done gathering list"
 
+    # Have not cleared node-colors for this run (yet)
+    cleared=0
+
     #count=`expr $count + 1`
     count=$(($count+1))
 
@@ -244,11 +250,15 @@ if (NF == 3) {
 };
 }'`
 
-			# Return all nodes in the "bubble diagram" to "nominal"
-			bubble_diagram_nominal
-
 			echo "$delta" | while IFS= read LINE
 			do
+
+				if [ ""$cleared"" = 0 ]
+				then
+					# Return all nodes in the "bubble diagram" to "nominal"
+					bubble_diagram_nominal
+					cleared=1
+				fi
 
 				NODE=`echo $LINE | awk '{ print $1}'`
 				TIME=`echo $LINE | awk '{ print $2}'`
@@ -258,8 +268,12 @@ if (NF == 3) {
 				# Print date and then data
 				echo `date` " -  $NODE $TIME $data"
 
-				# Colorize this nodes in the "bubble diagram"
-				if [ ""$TIME"" -ge 7 -a ""$TIME"" -lt 240 ]
+				# Colorize this node in the "bubble diagram"
+				# NOTE: Epoch times are currently >= 1547000000,
+				#       and if "TIME" is a value like that, it's more likely we recovered
+				#       from a failure to get stats last time around than an indication
+				#       of a transmission this time around.
+				if [ ""$TIME"" -ge 7 -a ""$TIME"" -lt 1500000000 ]
 				then
 					#echo "DEBUG: TIME green"
 					bubble_diagram_active $NODE "green"
