@@ -348,7 +348,7 @@ if (NF == 3) {
 				#       and if "TIME" is a value like that, it's more likely we recovered
 				#       from a failure to get stats last time around than an indication
 				#       of a transmission this time around.
-				if [ ""$TIME"" -ge 4 -a ""$TIME"" -lt 1500000000 -a ""$CCret"" -ne 0 ]
+				if [ ""$TIME"" -ge 4 -a ""$TIME"" -lt 1500000000 -a ""$CCret"" -ne ""$RETURN_NADA"" ]
 				then
 
 					if [ ""$cleared"" = 0 ]
