@@ -281,18 +281,33 @@ do
     else
 		##echo "DEBUG: comparing files..."
 
-
-
-		# See whether anyone is talking (us or them).
-		# If no one is talking, erase the color highlighting
-		# from all nodes
+		# See who (if anyone) is talking
 		checkComms
-		ret=$?
-		if [ ""$ret"" = 0 ]
+		CCret=$?
+
+		###################################################################
+		# LOGIC:
+		#	- If no one is talking, erase color highlighting from
+		#	  all nodes
+		#
+		#	- If *we* are talking, erase color highlighting from
+		#	  all nodes
+		#
+		#	- If somebody else is talking, leave everything alone!
+		###################################################################
+		if [ ""$CCret"" = ""$RETURN_NADA"" -o ""$CCret"" = ""$RETURN_TX"" ]
 		then
 			# Return all nodes in the "bubble diagram" to "nominal"
 			bubble_diagram_nominal
 			cleared=1
+
+		fi
+
+		# If THIS NODE is transmitting, then *we* should be green!
+		if [ ""$CCret"" = ""$RETURN_TX"" ]
+		then
+			#echo "DEBUG: LOCAL_TX  green"
+			bubble_diagram_active $SEED_NODE_NUMBER "green"
 		fi
 
 		rslt=`diff ${tmp_file1} ${tmp_file2} | wc -l`
@@ -333,7 +348,7 @@ if (NF == 3) {
 				#       and if "TIME" is a value like that, it's more likely we recovered
 				#       from a failure to get stats last time around than an indication
 				#       of a transmission this time around.
-				if [ ""$TIME"" -ge 4 -a ""$TIME"" -lt 1500000000 -a ""$ret"" -ne 0 ]
+				if [ ""$TIME"" -ge 4 -a ""$TIME"" -lt 1500000000 -a ""$CCret"" -ne 0 ]
 				then
 
 					if [ ""$cleared"" = 0 ]
