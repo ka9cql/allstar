@@ -20,7 +20,8 @@
 #                      Printed timestamp on every "status update".
 #  2019-01-15  msipin  Tried to adapt to failures in getting data from stats.allstar.org. Only
 #                      cleared node colors once per status-update loop (in case multiple nodes
-#                      transmitted since last update).
+#                      transmitted since last update). Added more intelligence for deciding what
+#                      color to paint the updating node.
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -44,6 +45,16 @@ WGET_TIMEOUT=15
 GENERATE_NODE_LIST_MODULO=30
 
 
+########################
+# Values for get-UDP-stats processing -
+RETURN_NADA=0
+RETURN_RX=1
+RETURN_TX=2
+RX_THRESHOLD=60
+TX_THRESHOLD=60
+IN=0
+OUT=0
+########################
 
 # Starting NODE number (usually is *YOUR* node number!) - unless you
 # override it on the command line!
@@ -174,6 +185,46 @@ get_node_list() {
 	#echo "DEBUG: NODE_LIST: [${NODE_LIST}]"
 }
 
+getUdpStats()
+{
+for name in IN OUT; do
+    read $name
+done <<EOF
+$(nstat -a | grep Udp | grep Datagrams | sort | awk '{ print $2 }')
+EOF
+}
+
+
+checkComms()
+{
+retVal=$RETURN_NADA
+getUdpStats
+old_in=$IN
+old_out=$OUT
+sleep 2
+getUdpStats
+new_in=$IN
+new_out=$OUT
+dr=`expr $new_in - $old_in`
+dt=`expr $new_out - $old_out`
+##echo "DEBUG: IN:  $dr"
+##echo "DEBUG: OUT: $dt"
+if [ ""$dr"" -gt $RX_THRESHOLD ]
+then
+	##echo "RX"
+	retVal=$RETURN_RX
+elif [ ""$dt"" -gt $TX_THRESHOLD ]
+then
+	##echo "TX"
+	retVal=$RETURN_TX
+else
+	##echo "nope"
+	retVal=$RETURN_NADA
+fi
+
+
+return $retVal
+}
 
 echo
 # Get database of all currently-known Allstar nodes
@@ -229,6 +280,21 @@ do
 		mv $tmp_file2 $tmp_file1
     else
 		##echo "DEBUG: comparing files..."
+
+
+
+		# See whether anyone is talking (us or them).
+		# If no one is talking, erase the color highlighting
+		# from all nodes
+		checkComms
+		ret=$?
+		if [ ""$ret"" = 0 ]
+		then
+			# Return all nodes in the "bubble diagram" to "nominal"
+			bubble_diagram_nominal
+			cleared=1
+		fi
+
 		rslt=`diff ${tmp_file1} ${tmp_file2} | wc -l`
 		#echo "DEBUG: rslt = $rslt"
 
@@ -250,15 +316,9 @@ if (NF == 3) {
 };
 }'`
 
+
 			echo "$delta" | while IFS= read LINE
 			do
-
-				if [ ""$cleared"" = 0 ]
-				then
-					# Return all nodes in the "bubble diagram" to "nominal"
-					bubble_diagram_nominal
-					cleared=1
-				fi
 
 				NODE=`echo $LINE | awk '{ print $1}'`
 				TIME=`echo $LINE | awk '{ print $2}'`
@@ -273,8 +333,16 @@ if (NF == 3) {
 				#       and if "TIME" is a value like that, it's more likely we recovered
 				#       from a failure to get stats last time around than an indication
 				#       of a transmission this time around.
-				if [ ""$TIME"" -ge 7 -a ""$TIME"" -lt 1500000000 ]
+				if [ ""$TIME"" -ge 4 -a ""$TIME"" -lt 1500000000 ]
 				then
+
+					if [ ""$cleared"" = 0 ]
+					then
+						# Return all nodes in the "bubble diagram" to "nominal"
+						bubble_diagram_nominal
+						cleared=1
+					fi
+
 					#echo "DEBUG: TIME green"
 					bubble_diagram_active $NODE "green"
 				else
