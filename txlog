@@ -429,7 +429,14 @@ for (i=3;i<=NF;i++) {
 printf "\n";
 } END {
 if (NR == 0) {
-    printf "  -  %s |Voip/Echolink||\n",NODE2;
+    printf "  -  %s",NODE2;
+
+    if (NODE2 >= 1000000) {
+	printf " |Echolink?||\n";
+    }
+    else {
+	printf " |Voip?||\n";
+    }
 }
 }' NODE2=${NODE2}
 			else
