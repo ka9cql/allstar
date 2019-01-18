@@ -8,6 +8,7 @@
 # 2018-12-13  msipin  Added annotations to each node. Added color gradient to each node.
 #                     Built output into temporary location, so it can run in the
 #                     background while others use the "final" SVG file.
+# 2019-01-18  msipin  Double-quoted each node's name, to protect against "special" characters.
 ##############################
 
 SEED_NODE_NUMBER=""
@@ -90,7 +91,7 @@ astar -b $SEED_NODE_NUMBER >> $outdot
 #    <stop offset="1" style="stop-color:green;stop-opacity:1.;"/>
 
 astar $SEED_NODE_NUMBER | sed "s/ /|/" | awk -F"|" '{
-printf "%s [label=\"%s - %s\n%s\", style=filled, fillcolor=\"white:lightblue\"];\n", $1, $3, $1, $5;
+printf "\"%s\" [label=\"%s - %s\n%s\", style=filled, fillcolor=\"white:lightblue\"];\n", $1, $3, $1, $5;
 }' >> $outdot
 
 echo "}" >> $outdot
