@@ -208,7 +208,7 @@ then
 	then
 		echo $rslt
 	else
-		echo "${NODE} |||"
+		echo "${NODE} |Voip||"
 	fi
   done | sort -u >> $tmp_file2
 fi
