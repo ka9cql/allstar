@@ -216,7 +216,7 @@ then
 			echo "${NODE} |Voip?||"
 		fi
 	fi
-  done | sort -u >> $tmp_file2
+  done |& sort -u >> $tmp_file2 2>/dev/null
 fi
 
 # Merget the two sources of data
