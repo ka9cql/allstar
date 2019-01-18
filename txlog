@@ -22,6 +22,7 @@
 #                      cleared node colors once per status-update loop (in case multiple nodes
 #                      transmitted since last update). Added more intelligence for deciding what
 #                      color to paint the updating node.
+#  2019-01-18  msipin  Ensured DISCONNECT: message included Voip and Echolink client nodes.
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -426,7 +427,11 @@ for (i=3;i<=NF;i++) {
     printf "%s%s", FS, $i;
 }
 printf "\n";
-}'
+} END {
+if (NR == 0) {
+    printf "  -  %s |Voip/Echolink||\n",NODE2;
+}
+}' NODE2=${NODE2}
 			else
 				echo "  - ${NODE2} (NODES.DB NOT FOUND)"
 			fi
