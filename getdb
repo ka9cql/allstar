@@ -14,6 +14,7 @@
 #                      Moved callsign to 3rd field (swapped 3rd and 4th).
 #  2018-12-18  msipin  Merge in the Allstar "asterisk node database", if found.
 #                      (ROLLED BACK - too many duplicates)
+#  2019-01-18  msipin  Fixed bug "if 0" on line 79 (now 80 because of this comment).
 #####################################
 
 CMD="lynx"
@@ -76,7 +77,7 @@ printf "\n";
 }' >  $ALLSTAR_NODE_DB
 
 
-if 0
+if [ 0 ]
 then
 	rm -f $tmp_file1 $tmp_file2 $tmp_file3
 
