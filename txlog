@@ -431,7 +431,7 @@ printf "\n";
 if (NR == 0) {
     printf "  -  %s",NODE2;
 
-    if (NODE2 >= 1000000) {
+    if (((NODE2 + 0) == NODE2) && (NODE2 >= 1000000)) {
 	printf " |Echolink?||\n";
     }
     else {
