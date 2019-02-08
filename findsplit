@@ -1,0 +1,98 @@
+#!/bin/sh
+#################
+# findsplit - Try to find where to "split" the ARRL Audio News or AR Newsline audio file.
+#             This is done by tring to detect the 440 Hz CQ "K" character (ARRL Audio News)
+#             or the 375 Hz "beeps" (repeated 5x - AR Newsline) embedded somewhere within
+#             the audio file.  THIS SCRIPT CURRENTLY ONLY HANDLES WAV-format FILES. It can
+#             handle MONO or STEREO files at any encoding rate (AFAIK!).
+#################
+
+if [ $# -ne 2 ]
+then
+	echo
+	echo "usage: $0 <file_type> <filename>"
+	echo
+	echo "where <file_type> is either ARN or ARRL"
+	echo "and   <filename> is the name of a WAV audio file to process"
+	echo
+	exit 2
+fi
+
+if [ $1 == "ARN" ]
+then
+	# AR Newsline -
+	LOW_FREQ=420
+	HIGH_FREQ=460
+elif [ $1 == "ARRL" ]
+then
+	# ARRL Audio News -
+	LOW_FREQ=350
+	HIGH_FREQ=400
+
+else
+	echo
+	echo "ERROR: Either ARN or ARRL *must* be specified for <file_type>"
+	echo
+	exit 2
+fi
+
+FILE=$2
+
+# AR Newsline uses a 440 Hz tone, repeated five times to signal you to unkey/ID your station -
+##   wf = wave.open('news.wav', 'rb')
+##   wf = wave.open('AAN-2019-02-01.wav', 'rb')
+##python2 freqdetect.py  AAN-2019-02-01.wav | awk '{ if (($5 > 350) && ($5 < 400)) print $0; }' | awk 'BEGIN {
+python2 freqdetect.py $FILE | awk '{ if (($5 > '$LOW_FREQ') && ($5 < '$HIGH_FREQ')) print $0; }' | awk 'BEGIN {
+last=0;
+tot=0;
+}{
+	if ($2 == (last+1))
+	{
+		last=$2;
+		tot++;
+
+		if (tot == 5) printf "\t\t****DETECTED TONE at %4.f seconds: %s\n", (($2*2048)/$10)-1,$0;
+		else print $0;
+	}
+	else
+	{
+		print "\n";
+		tot=0;
+	}
+	last=$2;
+}' | grep DETECTED | awk 'BEGIN { last=0; } {
+
+# Always print the first detection!
+if (last == 0)
+{
+	print $0;
+	last=$4;
+}
+else
+{
+	# We have already seen a detection. Only print this line if is is "a while after" the last one
+	if ($4 > (last+3))
+	{
+		print $0;
+		last=$4;
+	}
+	else
+	{
+		last=$4;
+	}
+}
+
+}'
+
+
+exit 0
+
+ FORMAT OF OUTPUT (so far) - 
+      $1      $2  $3   $4   $5      $6    $7   $8  $9   $10      $11  $12   $13 $14  $15  $16
+****DETECTED TONE at  562 seconds: Chunk 4393 freq is 440.051043 Hz, Sample Rate is 16000 Hz
+****DETECTED TONE at  564 seconds: Chunk 4404 freq is 440.050569 Hz, Sample Rate is 16000 Hz
+****DETECTED TONE at  565 seconds: Chunk 4416 freq is 440.050889 Hz, Sample Rate is 16000 Hz
+****DETECTED TONE at  567 seconds: Chunk 4428 freq is 440.051083 Hz, Sample Rate is 16000 Hz
+****DETECTED TONE at  568 seconds: Chunk 4439 freq is 440.050617 Hz, Sample Rate is 16000 Hz
+
+

@@ -1,0 +1,34 @@
+#!/bin/sh
+#######################
+# newscut - Tests having to do with cutting up a downloaded MP3 file using Python and FFTs.
+#           This is a test for automatically processing the ARRL Audio News and/or AR Newsline weekly
+#           audio feed at the "insert-your-repeater-callsign-here" point(s). Initially built for the
+#           W0SRC repeater club.
+#
+# HISTORICAL INFORMATION -
+#
+#  2019-02-04  msipin  Created
+#######################
+
+
+
+
+# ARRL Audio News -
+## Hardcoded, for when didn't have a file around Christmas -
+##ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-2019-02-01.mp3"
+ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-$(date --date="last friday" +%Y-%m-%d).mp3"
+wget ${ARRL_URL}
+mv AAN-*.mp3 ARRL.mp3
+###  DON'T USE THIS - mpg123 -w ARRL.wav ARRL.mp3
+lame -h --decode ARRL.mp3 ARRL.wav
+findsplit ARRL ARRL.wav
+
+# Newsline (AR Newsline) -
+##ARN_URL="https://www.arnewsline.org/s/news.mp3"
+##wget ${ARN_URL}
+#  DON'T USE THIS - mpg123 -w news.wav news.mp3
+##lame -h --decode news.mp3 news.wav
+##findsplit ARN news.wav
+
+exit 0
+
