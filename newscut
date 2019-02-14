@@ -10,25 +10,62 @@
 #  2019-02-04  msipin  Created
 #######################
 
+SRC="dunno.wav"
+TYPE="DUNNO"
+
+DO_DOWNLOAD="0"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
+
+if [ $# -ne 1 ]
+then
+	echo
+	echo "usage: $0 <file_type>"
+	echo
+	echo "where <file_type> is either ARN or ARRL"
+	echo
+	exit 2
+fi
+
+if [ $1 == "ARN" ]
+then
+	# Newsline (AR Newsline) -
+	TYPE="ARN"
+
+	if [ ""$DO_DOWNLOAD"" = "1" ]
+	then
+		ARN_URL="https://www.arnewsline.org/s/news.mp3"
+		wget ${ARN_URL}
+		lame -h --decode news.mp3 news.wav
+	fi
+	SRC="news.wav"
+
+elif [ $1 == "ARRL" ]
+then
+	# ARRL Audio News -
+	TYPE="ARRL"
+
+	if [ ""$DO_DOWNLOAD"" = "1" ]
+	then
+		## Hardcoded, for when didn't have a file around Christmas -
+		##ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-2019-02-01.mp3"
+		ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-$(date --date="last friday" +%Y-%m-%d).mp3"
+		wget ${ARRL_URL}
+		mv AAN-*.mp3 ARRL.mp3
+		lame -h --decode ARRL.mp3 ARRL.wav
+	fi
+	SRC="ARRL.wav"
+
+else
+	echo
+	echo "ERROR: Either ARN or ARRL *must* be specified for <file_type>"
+	echo
+	exit 2
+fi
+
+echo
+findsplit ${TYPE} ${SRC} 2>/dev/null
 
 
-
-# ARRL Audio News -
-## Hardcoded, for when didn't have a file around Christmas -
-##ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-2019-02-01.mp3"
-ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-$(date --date="last friday" +%Y-%m-%d).mp3"
-wget ${ARRL_URL}
-mv AAN-*.mp3 ARRL.mp3
-###  DON'T USE THIS - mpg123 -w ARRL.wav ARRL.mp3
-lame -h --decode ARRL.mp3 ARRL.wav
-findsplit ARRL ARRL.wav
-
-# Newsline (AR Newsline) -
-##ARN_URL="https://www.arnewsline.org/s/news.mp3"
-##wget ${ARN_URL}
-#  DON'T USE THIS - mpg123 -w news.wav news.mp3
-##lame -h --decode news.mp3 news.wav
-##findsplit ARN news.wav
+echo
 
 exit 0
 
