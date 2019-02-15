@@ -37,7 +37,7 @@ if [ $1 == "ARN" ]
 then
 	# Newsline (AR Newsline) -
 	TYPE="ARN"
-	REMOVE=6	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
+	REMOVE=7.7	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
 	## ARN - Subtract (0.95 + 0.46) from tone-detection location
 	DETECT_LEADER=1.41
 
@@ -54,7 +54,7 @@ elif [ $1 == "ARRL" ]
 then
 	# ARRL Audio News -
 	TYPE="ARRL"
-	REMOVE=3	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
+	REMOVE=3.0	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
 	## ARRL - Subtract 0.34 from tone-detection location
 	DETECT_LEADER=0.34
 
