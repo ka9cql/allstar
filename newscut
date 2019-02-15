@@ -8,27 +8,164 @@
 # HISTORICAL INFORMATION -
 #
 #  2019-02-04  msipin  Created
+#  2019-02-14  msipin  Accept command-line argument specifying news type (ARRL or ARN). Added "sanity
+#                      check" to the output of the tone-detector. Added actual split-recording logic.
 #######################
 
+TMPDIR="/tmp" 
+SRC="dunno.wav"
+TYPE="DUNNO"
+
+# Prevent splits from occurring "too often" or "not often enough"
+MIN_SPLIT_DURATION=120	# (minimum duration in seconds)
+MAX_SPLIT_DURATION=600	# (in seconds) Per FCC, must ID every 10-minutes-or-less
+
+
+DO_DOWNLOAD="1"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
+
+if [ $# -ne 1 ]
+then
+	echo
+	echo "usage: $0 <file_type>"
+	echo
+	echo "where <file_type> is either ARN or ARRL"
+	echo
+	exit 2
+fi
+
+if [ $1 == "ARN" ]
+then
+	# Newsline (AR Newsline) -
+	TYPE="ARN"
+	REMOVE=7.7	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
+	## ARN - Subtract (0.95 + 0.46) from tone-detection location
+	DETECT_LEADER=1.41
+
+	if [ ""$DO_DOWNLOAD"" = "1" ]
+	then
+		ARN_URL="https://www.arnewsline.org/s/news.mp3"
+		rm -f news.mp3
+		wget ${ARN_URL}
+		lame -h --decode news.mp3 news.wav
+	fi
+	SRC="news.wav"
+
+elif [ $1 == "ARRL" ]
+then
+	# ARRL Audio News -
+	TYPE="ARRL"
+	REMOVE=3.0	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
+	## ARRL - Subtract 0.34 from tone-detection location
+	DETECT_LEADER=0.34
+
+	if [ ""$DO_DOWNLOAD"" = "1" ]
+	then
+		## Hardcoded, for when didn't have a file around Christmas -
+		##ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-2019-02-01.mp3"
+		ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-$(date --date="last friday" +%Y-%m-%d).mp3"
+		wget ${ARRL_URL}
+		rm -f ARRL.mp3
+		mv AAN-*.mp3 ARRL.mp3
+		lame -h --decode ARRL.mp3 ARRL.wav
+	fi
+	SRC="ARRL.wav"
+
+else
+	echo
+	echo "ERROR: Either ARN or ARRL *must* be specified for <file_type>"
+	echo
+	exit 2
+fi
+
+echo
+
+
+# Find the splits
+splits=`findsplit ${TYPE} ${SRC} 2>/dev/null | awk 'BEGIN { errors=0; last=0; MIN_D='$MIN_SPLIT_DURATION'; MAX_D='$MAX_SPLIT_DURATION'; }{
+
+##printf "MIN=%s  MAX=%s\n", MIN_D, MAX_D;
+
+while ($2 != "TONE") readline;
+
+if (($4 - last) < MIN_D)
+{
+	printf "\n\tERROR: Split at %d seconds occurs less than %d seconds after previous split at %d\n\n", $4, MIN_D, last > "/dev/stderr"
+	errors++;
+}
+else if (($4 - last) > MAX_D)
+{
+	printf "\n\tERROR: Split at %d seconds occurs more than %d seconds after previous split at %d\n\n", $4, MAX_D, last > "/dev/stderr"
+	last=last+MAX_D
+	printf "Creating artificial split at %d\n", last > "/dev/stderr"
+	print last
+	errors++;
+}
+else
+{
+	print $4
+	last=$4
+}
+
+
+} END {
+printf "Errors encountered during processing: %d\n", errors > "/dev/stderr"
+}'`
+
+
+echo
+echo "SECTIONS:"
+echo -n "0"
+for SPLIT in $splits
+do
+	echo " - "$SPLIT
+	SPLIT=`echo $SPLIT + $REMOVE | bc`
+	echo -n $SPLIT
+done
+echo " - EOF"
+
+echo
+
+
+# Divide into segments
+
+START=0
+PART=1
+
+rm -f $TMPDIR/part*.wav
+for SPLIT in $splits
+do
+	# Establish cut location (it's a little bit before the tone-detection location)
+	CUTLOC=`echo $SPLIT - $DETECT_LEADER | bc`
+
+	echo "Creating $TMPDIR/part$PART.wav as $START to $CUTLOC "
+	sox --temp $TMPDIR $SRC $TMPDIR/part$PART.wav trim =$START =$CUTLOC &> /dev/null 2>&1
+	let "PART += 1"
+	START=`echo $CUTLOC + $REMOVE | bc`
+done
+# Process final part -
+echo "Creating $TMPDIR/part$PART.wav as $START to EOF "
+sox --temp $TMPDIR $SRC $TMPDIR/part$PART.wav trim =$START =99999 &> /dev/null 2>&1
 
 
 
-# ARRL Audio News -
-## Hardcoded, for when didn't have a file around Christmas -
-##ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-2019-02-01.mp3"
-ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-$(date --date="last friday" +%Y-%m-%d).mp3"
-wget ${ARRL_URL}
-mv AAN-*.mp3 ARRL.mp3
-###  DON'T USE THIS - mpg123 -w ARRL.wav ARRL.mp3
-lame -h --decode ARRL.mp3 ARRL.wav
-findsplit ARRL ARRL.wav
-
-# Newsline (AR Newsline) -
-##ARN_URL="https://www.arnewsline.org/s/news.mp3"
-##wget ${ARN_URL}
-#  DON'T USE THIS - mpg123 -w news.wav news.mp3
-##lame -h --decode news.mp3 news.wav
-##findsplit ARN news.wav
+echo
 
 exit 0
+
+
+####################################
+### FINDSPLIT OUTPUT -
+####################################
+	ARN -
+                       $1     $2  $3   $4   $5       $6   $7   $8  $9     $10   $11    $12  $13 $14  $15  $16
+                ****DETECTED TONE at  582 seconds: Chunk 4551 freq is 432.064478 Hz, Sample Rate is 16000 Hz
+
+	ARRL -
+                       $1     $2  $3   $4   $5       $6   $7   $8  $9     $10   $11    $12  $13 $14  $15  $16
+                ****DETECTED TONE at   12 seconds: Chunk 289 freq is 375.097982 Hz, Sample Rate is 44100 Hz
+                ****DETECTED TONE at  146 seconds: Chunk 3167 freq is 375.055615 Hz, Sample Rate is 44100 Hz
+                ****DETECTED TONE at  276 seconds: Chunk 5955 freq is 375.085052 Hz, Sample Rate is 44100 Hz
+                ****DETECTED TONE at  442 seconds: Chunk 9536 freq is 375.076782 Hz, Sample Rate is 44100 Hz
+
+####################################
 
