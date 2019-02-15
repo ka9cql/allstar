@@ -20,7 +20,7 @@ MIN_SPLIT_DURATION=120	# (minimum duration in seconds)
 MAX_SPLIT_DURATION=600	# (in seconds) Per FCC, must ID every 10-minutes-or-less
 
 
-DO_DOWNLOAD="1"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
+DO_DOWNLOAD="0"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
 
 if [ $# -ne 1 ]
 then
@@ -74,33 +74,45 @@ echo
 
 
 # Find the splits
-findsplit ${TYPE} ${SRC} 2>/dev/null | awk 'BEGIN { errors=0; last=0; MIN_D='$MIN_SPLIT_DURATION'; MAX_D='$MAX_SPLIT_DURATION'; }{
+splits=`findsplit ${TYPE} ${SRC} 2>/dev/null | awk 'BEGIN { errors=0; last=0; MIN_D='$MIN_SPLIT_DURATION'; MAX_D='$MAX_SPLIT_DURATION'; }{
 
 ##printf "MIN=%s  MAX=%s\n", MIN_D, MAX_D;
 
 while ($2 != "TONE") readline;
 
-print $0
-
 if (($4 - last) < MIN_D)
 {
-	printf "\n\tERROR: Split at %d seconds occurs less than %d seconds after previous split at %d\n\n", $4, MIN_D, last;
+	printf "\n\tERROR: Split at %d seconds occurs less than %d seconds after previous split at %d\n\n", $4, MIN_D, last > "/dev/stderr"
 	errors++;
 }
-
-if (($4 - last) > MAX_D)
+else if (($4 - last) > MAX_D)
 {
-	printf "\n\tERROR: Split at %d seconds occurs more than %d seconds after previous split at %d\n\n", $4, MAX_D, last;
+	printf "\n\tERROR: Split at %d seconds occurs more than %d seconds after previous split at %d\n\n", $4, MAX_D, last > "/dev/stderr"
+	last=last+MAX_D
+	printf "Creating artificial split at %d\n", last > "/dev/stderr"
+	print last
 	errors++;
 }
+else
+{
+	print $4
+	last=$4
+}
 
-last=$4
 
 } END {
-printf "\nErrors encountered during processing: %d\n", errors;
-}'
+printf "Errors encountered during processing: %d\n", errors > "/dev/stderr"
+}'`
 
 
+echo
+echo -n "SPLITS: "
+for SPLIT in $splits
+do
+	echo -n $SPLIT" "
+done
+
+echo
 echo
 
 exit 0
