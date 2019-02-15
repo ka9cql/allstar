@@ -12,7 +12,7 @@
 #                      check" to the output of the tone-detector. Added actual split-recording logic.
 #######################
 
-TMPDIR="/tmp" 
+TMPDIR="/dev/shm" 
 SRC="dunno.wav"
 TYPE="DUNNO"
 
