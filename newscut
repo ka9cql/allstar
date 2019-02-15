@@ -20,7 +20,7 @@ MIN_SPLIT_DURATION=120	# (minimum duration in seconds)
 MAX_SPLIT_DURATION=600	# (in seconds) Per FCC, must ID every 10-minutes-or-less
 
 
-DO_DOWNLOAD="0"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
+DO_DOWNLOAD="1"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
 
 if [ $# -ne 1 ]
 then
@@ -40,6 +40,7 @@ then
 	if [ ""$DO_DOWNLOAD"" = "1" ]
 	then
 		ARN_URL="https://www.arnewsline.org/s/news.mp3"
+		rm -f news.mp3
 		wget ${ARN_URL}
 		lame -h --decode news.mp3 news.wav
 	fi
@@ -56,6 +57,7 @@ then
 		##ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-2019-02-01.mp3"
 		ARRL_URL="http://content.blubrry.com/arrlaudionews/AAN-$(date --date="last friday" +%Y-%m-%d).mp3"
 		wget ${ARRL_URL}
+		rm -f ARRL.mp3
 		mv AAN-*.mp3 ARRL.mp3
 		lame -h --decode ARRL.mp3 ARRL.wav
 	fi
