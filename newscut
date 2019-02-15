@@ -86,6 +86,14 @@ if (($4 - last) < MIN_D)
 	errors++;
 }
 
+if (($4 - last) > MAX_D)
+{
+	printf "\n\tERROR: Split at %d seconds occurs more than %d seconds after previous split at %d\n\n", $4, MAX_D, last;
+	errors++;
+}
+
+last=$4
+
 } END {
 printf "\nErrors encountered during processing: %d\n", errors;
 }'
