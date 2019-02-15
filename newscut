@@ -9,9 +9,10 @@
 #
 #  2019-02-04  msipin  Created
 #  2019-02-14  msipin  Accept command-line argument specifying news type (ARRL or ARN). Added "sanity
-#                      check" to the output of the tone-detector.
+#                      check" to the output of the tone-detector. Added actual split-recording logic.
 #######################
 
+TMPDIR="/tmp" 
 SRC="dunno.wav"
 TYPE="DUNNO"
 
@@ -20,7 +21,7 @@ MIN_SPLIT_DURATION=120	# (minimum duration in seconds)
 MAX_SPLIT_DURATION=600	# (in seconds) Per FCC, must ID every 10-minutes-or-less
 
 
-DO_DOWNLOAD="0"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
+DO_DOWNLOAD="1"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
 
 if [ $# -ne 1 ]
 then
@@ -36,7 +37,9 @@ if [ $1 == "ARN" ]
 then
 	# Newsline (AR Newsline) -
 	TYPE="ARN"
-	REMOVE=7	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
+	REMOVE=6	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
+	## ARN - Subtract (0.95 + 0.46) from tone-detection location
+	DETECT_LEADER=1.41
 
 	if [ ""$DO_DOWNLOAD"" = "1" ]
 	then
@@ -52,6 +55,8 @@ then
 	# ARRL Audio News -
 	TYPE="ARRL"
 	REMOVE=3	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
+	## ARRL - Subtract 0.34 from tone-detection location
+	DETECT_LEADER=0.34
 
 	if [ ""$DO_DOWNLOAD"" = "1" ]
 	then
@@ -113,12 +118,36 @@ echo -n "0"
 for SPLIT in $splits
 do
 	echo " - "$SPLIT
-	let "SPLIT += REMOVE"
+	SPLIT=`echo $SPLIT + $REMOVE | bc`
 	echo -n $SPLIT
 done
 echo " - EOF"
 
 echo
+
+
+# Divide into segments
+
+START=0
+PART=1
+
+rm -f $TMPDIR/part*.wav
+for SPLIT in $splits
+do
+	# Establish cut location (it's a little bit before the tone-detection location)
+	CUTLOC=`echo $SPLIT - $DETECT_LEADER | bc`
+
+	echo "Creating $TMPDIR/part$PART.wav as $START to $CUTLOC "
+	sox --temp $TMPDIR $SRC $TMPDIR/part$PART.wav trim =$START =$CUTLOC &> /dev/null 2>&1
+	let "PART += 1"
+	START=`echo $CUTLOC + $REMOVE | bc`
+done
+# Process final part -
+echo "Creating $TMPDIR/part$PART.wav as $START to EOF "
+sox --temp $TMPDIR $SRC $TMPDIR/part$PART.wav trim =$START =99999 &> /dev/null 2>&1
+
+
+
 echo
 
 exit 0

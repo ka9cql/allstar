@@ -5,6 +5,10 @@
 #             or the 375 Hz "beeps" (repeated 5x - AR Newsline) embedded somewhere within
 #             the audio file.  THIS SCRIPT CURRENTLY ONLY HANDLES WAV-format FILES. It can
 #             handle MONO or STEREO files at any encoding rate (AFAIK!).
+#
+# HISTORICAL INFORMATION -
+#
+#  2019-02-14  msipin  Removed 1-second "adjustment" from output and printed to two decimal places.
 #################
 
 if [ $# -ne 2 ]
@@ -51,7 +55,7 @@ tot=0;
 		last=$2;
 		tot++;
 
-		if (tot == 5) printf "\t\t****DETECTED TONE at %4.f seconds: %s\n", (($2*2048)/$10)-1,$0;
+		if (tot == 5) printf "\t\t****DETECTED TONE at %4.2f seconds: %s\n", (($2*2048)/$10),$0;
 		else print $0;
 	}
 	else
