@@ -15,6 +15,11 @@
 #  2018-12-18  msipin  Merge in the Allstar "asterisk node database", if found.
 #                      (ROLLED BACK - too many duplicates)
 #  2019-01-18  msipin  Fixed bug "if 0" on line 79 (now 80 because of this comment).
+#
+#  2019-02-11  msipin  Here are some resources within the "nominal" Allstar distribution that
+#                      are related to building a node list -
+#                              (RSYNC TO) allstarlink.org/connect-messages
+#                              https://allstarlink.org/cgi-bin/allmondb.pl
 #####################################
 
 CMD="lynx"
