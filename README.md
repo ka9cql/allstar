@@ -24,15 +24,18 @@ Continuing...
 6) pacman -S graphviz     (NOTE 1of2: Same as above - you don't have to re-install it if it is already installed.)
                           (NOTE 2of2: If it gives you a choice of where to grab this package from, you can accept the default)
 7) cd /root/allstar
-8) chmod 755 astar bubbles getdb txlog gmtdate downloadnews playnewstest
+8) chmod 755 astar bubbles findsplit freqdetect.py getdb gmtdate newscut pitemp txlog downloadnews playnewstest
 9) cd /usr/local/bin
 10) Make commands available to all users -
-    a) ln -s /root/allstar/astar .     (It's OK if it says "file already exists")
-    b) ln -s /root/allstar/bubbles .   (It's OK if it says "file already exists")
-    c) ln -s /root/allstar/getdb .     (It's OK if it says "file already exists")
-    d) ln -s /root/allstar/gmtdate .   (It's OK if it says "file already exists")
-    e) ln -s /root/allstar/txlog .     (It's OK if it says "file already exists")
-    f) ln -s /root/allstar/pitemp .    (It's OK if it says "file already exists")
+    a) ln -s /root/allstar/astar .         (It's OK if it says "file already exists")
+    b) ln -s /root/allstar/bubbles .       (It's OK if it says "file already exists")
+    c) ln -s /root/allstar/findsplit .     (It's OK if it says "file already exists")
+    d) ln -s /root/allstar/freqdetect.py . (It's OK if it says "file already exists")
+    e) ln -s /root/allstar/getdb .         (It's OK if it says "file already exists")
+    f) ln -s /root/allstar/gmtdate .       (It's OK if it says "file already exists")
+    g) ln -s /root/allstar/newscut .       (It's OK if it says "file already exists")
+    h) ln -s /root/allstar/pitemp .        (It's OK if it says "file already exists")
+    i) ln -s /root/allstar/txlog .         (It's OK if it says "file already exists")
 11) cd /etc/asterisk/local/playnews        (Create this directory if it doesn't exist, and then "cd" into it)
 12) Make files available to Allstar/cron -
     a) ln -s /root/allstar/downloadnews .     (It's OK if it says "file already exists")
