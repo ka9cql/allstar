@@ -36,7 +36,7 @@ window = np.blackman(chunk)
 data = wf.readframes(chunk)
 print "DEBUG: len(data) is %d" % (len(data))
 if (CH == 2):
-    data2 = data[0:4096:1]
+    data2 = data[0:(chunk*2):1]
     data = data2
 # find the frequency of each chunk
 while len(data) == chunk*swidth:
@@ -61,7 +61,7 @@ while len(data) == chunk*swidth:
     # read some more data
     data = wf.readframes(chunk)
     if (CH == 2):
-        data2 = data[0:4096:1]
+        data2 = data[0:(chunk*2):1]
         data = data2
 
 
