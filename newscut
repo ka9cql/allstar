@@ -23,23 +23,41 @@ MAX_SPLIT_DURATION=600	# (in seconds) Per FCC, must ID every 10-minutes-or-less
 
 DO_DOWNLOAD="1"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
 
-if [ $# -ne 1 ]
+usage()
+{
+	echo
+	echo "usage: $0 [ --nolimit ] <file_type>"
+	echo
+	echo "where --nolimit   (optional) removes the 10-minute-maximum limitation for each split section"
+	echo
+	echo "and   <file_type> (mandatory) must be either ARN or ARRL, to indicate which audio news source"
+	echo "                  to retrieve and process"
+	echo
+}
+
+
+
+if [ $# -lt 1 ]
 then
-	echo
-	echo "usage: $0 <file_type>"
-	echo
-	echo "where <file_type> is either ARN or ARRL"
-	echo
+	usage
 	exit 2
 fi
 
-if [ $1 == "ARN" ]
+if [ $1 == "--nolimit" ]
+then
+	MAX_SPLIT_DURATION=999999
+	shift 1
+fi
+
+TYPE=$1
+
+if [ ""$TYPE"" == "ARN" ]
 then
 	# Newsline (AR Newsline) -
-	TYPE="ARN"
 	REMOVE=7.7	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
 	## ARN - Subtract (0.95 + 0.46) from tone-detection location
-	DETECT_LEADER=1.41
+	## DETECT_LEADER=1.41 - Too much - occasionally cuts off tail of first part.
+	DETECT_LEADER=0.96
 
 	if [ ""$DO_DOWNLOAD"" = "1" ]
 	then
@@ -50,10 +68,9 @@ then
 	fi
 	SRC="news.wav"
 
-elif [ $1 == "ARRL" ]
+elif [ ""$TYPE"" == "ARRL" ]
 then
 	# ARRL Audio News -
-	TYPE="ARRL"
 	REMOVE=3.0	# Number of seconds of audio to remove, starting at the beginning of the tone, itself
 	## ARRL - Subtract 0.34 from tone-detection location
 	DETECT_LEADER=0.34
@@ -72,8 +89,8 @@ then
 
 else
 	echo
-	echo "ERROR: Either ARN or ARRL *must* be specified for <file_type>"
-	echo
+	echo "ERROR: Invalid <file_type>"
+	usage
 	exit 2
 fi
 
