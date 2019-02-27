@@ -10,6 +10,14 @@
 #  2019-02-04  msipin  Created
 #  2019-02-14  msipin  Accept command-line argument specifying news type (ARRL or ARN). Added "sanity
 #                      check" to the output of the tone-detector. Added actual split-recording logic.
+#  2019-02-22  msipin  Added new "--nolimit" command line argument that lets you override the 10-minute
+#                      limit on partition length (per FCC rules - you have to ID your station at least
+#                      every 10 minutes).
+#  2019-02-27  msipin  Flipped max-partition-length logic on its head. Now this tool splits the input
+#                      file wherever (if ever) the tone is found.  If that resulting split is too long
+#                      for any purpose (including the 10-minute FCC ID requirement stated above), then
+#                      it is up to the operator to re-run this tool with the new "--maxcut <nn>"
+#                      command-line argument to specify where (max) to cut each partition.
 #######################
 
 TMPDIR="/dev/shm" 
@@ -17,8 +25,13 @@ SRC="dunno.wav"
 TYPE="DUNNO"
 
 # Prevent splits from occurring "too often" or "not often enough"
-MIN_SPLIT_DURATION=120	# (minimum duration in seconds)
-MAX_SPLIT_DURATION=600	# (in seconds) Per FCC, must ID every 10-minutes-or-less
+MIN_SPLIT_DURATION=100	# (minimum duration in seconds)
+## OLD LOGIC -
+##MAX_SPLIT_DURATION=600	# (in seconds) Per FCC, must ID every 10-minutes-or-less
+## NEW LOGIC -
+MAX_SPLIT_DURATION=999999	# Don't enforce a max partition limitation by default (let the
+				# user override this behavior - if they want - using the "--maxcut <nn>"
+				# command-line setting
 
 
 DO_DOWNLOAD="1"		# Set to "1" to perform the download (aka "live") or "0" to skip it (aka when just testing)
@@ -26,9 +39,10 @@ DO_DOWNLOAD="1"		# Set to "1" to perform the download (aka "live") or "0" to ski
 usage()
 {
 	echo
-	echo "usage: $0 [ --nolimit ] <file_type>"
+	echo "usage: $0 [ --maxcut <nn> ] <file_type>"
 	echo
-	echo "where --nolimit   (optional) removes the 10-minute-maximum limitation for each split section"
+	echo "where --maxcut <nn>   (optional) specifies the maximum duration (in seconds, where <nn> is number"
+	echo "                      of seconds) for each portion of audio to be cut from the input"
 	echo
 	echo "and   <file_type> (mandatory) must be either ARN or ARRL, to indicate which audio news source"
 	echo "                  to retrieve and process"
@@ -43,10 +57,10 @@ then
 	exit 2
 fi
 
-if [ $1 == "--nolimit" ]
+if [ $1 == "--maxcut" ]
 then
-	MAX_SPLIT_DURATION=999999
-	shift 1
+	MAX_SPLIT_DURATION=$2
+	shift 2
 fi
 
 TYPE=$1
