@@ -2,13 +2,18 @@
 # Script: pitemp
 # Purpose: Display the ARM CPU and GPU  temperature of Raspberry Pi 2/3
 # Author: Vivek Gite <www.cyberciti.biz> under GPL v2.x+
+#
+# HISTORICAL INFORMATION -
+#
+#  2019-03-11  msipin  Added this header. Removed redundant "C"/"F" fields and
+#                      reordered output when in "daemon" mode
 # -------------------------------------------------------
 
 LOG_FORMAT=0
 SHOW_HEADER=1
 DAEMON=0
 
-HEADER="date_time_GMT_offset,hostname,GPU_temp_C,C,GPU_temp_F,F,CPU_temp_C,C,CPU_temp_F,F"
+HEADER="date_time_GMT_offset,hostname,GPU_temp_C,CPU_temp_C,GPU_temp_F,CPU_temp_F"
 
 usage()
 {
@@ -61,7 +66,7 @@ do
 			SHOW_HEADER=0
 		fi
 
-		echo "$(date --rfc-3339=seconds),$(hostname),${gpu_C},C,${gpu_F},F,${cpu_C},C,${cpu_F},F"
+		echo "$(date --rfc-3339=seconds),$(hostname),${gpu_C},${cpu_C},${gpu_F},${cpu_F}"
 	else
 		echo
 		echo "$(date) @ $(hostname)"
