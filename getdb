@@ -20,6 +20,8 @@
 #                      are related to building a node list -
 #                              (RSYNC TO) allstarlink.org/connect-messages
 #                              https://allstarlink.org/cgi-bin/allmondb.pl
+#  2019-08-02  msipin  Fixed redirect of both stdout and stderr for systems that don't like the
+#                      pipe-plus-ampersand (e.g. "|&").
 #####################################
 
 CMD="lynx"
@@ -52,7 +54,7 @@ fi
 
 
 
-rslt=`which $CMD |&grep -v "which: no"`
+rslt=`which $CMD 2>&1 | grep -v "which: no"`
 if [ -z ""$rslt"" ]
 then
 	echo
