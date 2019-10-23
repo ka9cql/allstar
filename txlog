@@ -23,6 +23,8 @@
 #                      transmitted since last update). Added more intelligence for deciding what
 #                      color to paint the updating node.
 #  2019-01-18  msipin  Ensured DISCONNECT: message included Voip and Echolink client nodes.
+#  2019-10-23  msipin  Definitively differentiated between Echolink and Voip node numbers following
+#                      advice from the web.
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -431,11 +433,11 @@ printf "\n";
 if (NR == 0) {
     printf "  -  %s",NODE2;
 
-    if (((NODE2 + 0) == NODE2) && (NODE2 >= 1000000)) {
-	printf " |Echolink?||\n";
+    if (((NODE2 + 0) == NODE2) && (NODE2 >= 3000000) && (NODE2 <= 3999999)) {
+	printf " |Echolink||\n";
     }
     else {
-	printf " |Voip?||\n";
+	printf " |Voip||\n";
     }
 }
 }' NODE2=${NODE2}
