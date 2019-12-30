@@ -258,6 +258,8 @@ do
     rm -f $tmp_file2 $tmp_file3
     for NODE in $NODE_LIST
     do
+	# Initial wget-retry interval
+	sleep_delay=7
 	while [ 2 ]
 	do
 		rm -f $tmp_file6
@@ -274,7 +276,11 @@ do
 			break;
 		else
 			echo "Error fetching details for Node: [${NODE}] at "`date`
-			sleep 60
+			sleep $sleep_delay
+			if [ $sleep_delay lt 60 ]
+			then
+				sleep_delay=`echo "$sleep_delay + 7" | bc`
+			fi
 			continue
 		fi
 	done
