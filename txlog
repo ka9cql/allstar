@@ -25,6 +25,7 @@
 #  2019-01-18  msipin  Ensured DISCONNECT: message included Voip and Echolink client nodes.
 #  2019-10-23  msipin  Definitively differentiated between Echolink and Voip node numbers following
 #                      advice from the web.
+#  2019-12-30  msipin  Added error-checking and sleep-upon-error to wget calls to stats.allstarlink.org
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -76,14 +77,15 @@ tmp_file2="/dev/shm/txlog.$$.2"
 tmp_file3="/dev/shm/txlog.$$.3"
 tmp_file4="/dev/shm/txlog.$$.4"
 tmp_file5="/dev/shm/txlog.$$.5"
+tmp_file6="/dev/shm/tlog.$$.6"
 
 tmp_db_file=/dev/shm/astar.$$.db
 
 
-trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_db_file; exit 0" 0 1 2 3 6 12 15
+trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_file6 $tmp_db_file; exit 0" 0 1 2 3 6 12 15
 
 
-rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_db_file
+rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_file6 $tmp_db_file
 
 
 draw_bubble_diagram() {
@@ -256,8 +258,29 @@ do
     rm -f $tmp_file2 $tmp_file3
     for NODE in $NODE_LIST
     do
-	##echo "DEBUG: Checking ${NODE}..."
-	data=`wget --timeout=${WGET_TIMEOUT} -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${NODE} | awk -F"<tr><td>" '{ for (i=1;i<=NF;i++) { print $i; }; }' | grep time | sed "s/</ /g" | sed "s/>/ /g" | sed "s/\// /g" | sed "s/ td / /g" | sed "s/ tr//g"`
+	while [ 2 ]
+	do
+		rm -f $tmp_file6
+		##echo "DEBUG: Checking ${NODE}..."
+		wget --timeout=${WGET_TIMEOUT} -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${NODE} > $tmp_file6
+
+		rslt=$?
+		if [ $rslt == 0 ]
+		then
+			# Success, don't need to retry...
+			#echo "DEBUG: SUCCESS fetching details for Node: [${NODE}]."
+			# Add sleep 1 to rate-limit in case of weird errors
+			sleep 1
+			break;
+		else
+			echo "Error fetching details for Node: [${NODE}] at "`date`
+			sleep 60
+			continue
+		fi
+	done
+
+	data=`cat $tmp_file6 | awk -F"<tr><td>" '{ for (i=1;i<=NF;i++) { print $i; }; }' | grep time | sed "s/</ /g" | sed "s/>/ /g" | sed "s/\// /g" | sed "s/ td / /g" | sed "s/ tr//g"`
+
 
 	# ALL DATA -
 	if [ ""$SHOW_RAW"" -eq 1 ]
