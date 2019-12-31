@@ -28,6 +28,8 @@
 #  2019-12-30  msipin  Added error-checking and sleep-upon-error to wget calls to stats.allstarlink.org
 #                      Increased the wget timeout from 15 to 60 seconds due to the incredible amount
 #                      of timeouts/errors I've been seeing from the stats.allstarlink.org server
+#  2019-12-30  msipin  Reworked around new Allstar URL - allstarNodesMapKey.php, which shows a list
+#                      of Allstar nodes that are currently transmitting
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -79,15 +81,16 @@ tmp_file2="/dev/shm/txlog.$$.2"
 tmp_file3="/dev/shm/txlog.$$.3"
 tmp_file4="/dev/shm/txlog.$$.4"
 tmp_file5="/dev/shm/txlog.$$.5"
-tmp_file6="/dev/shm/tlog.$$.6"
+tmp_file6="/dev/shm/txlog.$$.6"
+tmp_file7="/dev/shm/txlog.$$.7"
 
 tmp_db_file=/dev/shm/astar.$$.db
 
 
-trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_file6 $tmp_db_file; exit 0" 0 1 2 3 6 12 15
+trap "rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_file6 $tmp_file7 $tmp_db_file; exit 0" 0 1 2 3 6 12 15
 
 
-rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_file6 $tmp_db_file
+rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_file6 $tmp_file7 $tmp_db_file
 
 
 draw_bubble_diagram() {
@@ -257,37 +260,49 @@ echo
 count=0
 while [ 1 ]
 do
-    rm -f $tmp_file2 $tmp_file3
+    rm -f $tmp_file2 $tmp_file3 $tmp_file7
+    # Initial wget-retry interval
+    sleep_delay=2
+    while [ 2 ]
+    do
+        rm -f $tmp_file6
+        # Get list of all currently-transmitting nodes from Allstar server -
+        sleep $sleep_delay
+        wget --timeout=${WGET_TIMEOUT} -q -O- http://stats.allstarlink.org/maps/allstarNodesMapKey.php > $tmp_file6
+
+        rslt=$?
+        if [ $rslt == 0 ]
+        then
+                # Success, don't need to retry...
+                #echo "DEBUG: SUCCESS fetching list of all currently-transmitting Allstar nodes"
+                break;
+        else
+                echo `date`" - Error [${rslt}] fetching currently-transmitting node list"
+                if [ $sleep_delay -lt 60 ]
+                then
+                        sleep_delay=`echo "$sleep_delay + 5" | bc`
+                fi
+                continue
+        fi
+    done
+
+    cat $tmp_file6 | awk -F"nodeList.php" '{
+for (i=1;i<=NF;i++) {
+print $i
+};
+}' | grep "^.node=" | awk -F'"' '{ print $1 }' | sed "s/^.node=//" | sort -u > $tmp_file7
+
+
+    echo "DEBUG: NODE LIST -"
+    cat $tmp_file7
+    echo "----------"
+
+
+
     for NODE in $NODE_LIST
     do
-	# Initial wget-retry interval
-	sleep_delay=7
-	while [ 2 ]
-	do
-		rm -f $tmp_file6
-		##echo "DEBUG: Checking ${NODE}..."
-		wget --timeout=${WGET_TIMEOUT} -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${NODE} > $tmp_file6
 
-		rslt=$?
-		if [ $rslt == 0 ]
-		then
-			# Success, don't need to retry...
-			#echo "DEBUG: SUCCESS fetching details for Node: [${NODE}]."
-			# Add sleep 1 to rate-limit in case of weird errors
-			sleep 1
-			break;
-		else
-			echo `date`" - Error [${rslt}] fetching details for Node: [${NODE}]"
-			sleep $sleep_delay
-			if [ $sleep_delay -lt 60 ]
-			then
-				sleep_delay=`echo "$sleep_delay + 7" | bc`
-			fi
-			continue
-		fi
-	done
-
-	data=`cat $tmp_file6 | awk -F"<tr><td>" '{ for (i=1;i<=NF;i++) { print $i; }; }' | grep time | sed "s/</ /g" | sed "s/>/ /g" | sed "s/\// /g" | sed "s/ td / /g" | sed "s/ tr//g"`
+	data=`grep -c "^${NODE}$" $tmp_file7`
 
 
 	# ALL DATA -
@@ -297,7 +312,7 @@ do
 	fi
 
 	# Precise fields -
-	echo ${data} | awk '{ printf "%s %s\n", NODE, $0; }' NODE=${NODE} | awk '{ print $1,$6; }' >> $tmp_file2
+	echo ${data} | awk '{ printf "%s %s\n", NODE, $0; }' NODE=${NODE} >> $tmp_file2
     done
 
     #echo "DEBUG: Done gathering list"
@@ -382,7 +397,7 @@ if (NF == 3) {
 				#       and if "TIME" is a value like that, it's more likely we recovered
 				#       from a failure to get stats last time around than an indication
 				#       of a transmission this time around.
-				if [ ""$TIME"" -ge 4 -a ""$TIME"" -lt 1500000000 -a ""$CCret"" -ne ""$RETURN_NADA"" ]
+				if [ ""$TIME"" -ge 1 -a ""$CCret"" -ne ""$RETURN_NADA"" ]
 				then
 
 					if [ ""$cleared"" = 0 ]
