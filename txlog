@@ -26,6 +26,8 @@
 #  2019-10-23  msipin  Definitively differentiated between Echolink and Voip node numbers following
 #                      advice from the web.
 #  2019-12-30  msipin  Added error-checking and sleep-upon-error to wget calls to stats.allstarlink.org
+#                      Increased the wget timeout from 15 to 60 seconds due to the incredible amount
+#                      of timeouts/errors I've been seeing from the stats.allstarlink.org server
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -41,7 +43,7 @@ outsvg2="/srv/http/supermon/bubbles2.svg"
 SHOW_RAW=0	# Set to "1" if you want to see the "raw" data for all nodes upon delta detection
 
 # Max timeout for any one wget command (in seconds)
-WGET_TIMEOUT=15
+WGET_TIMEOUT=60
 
 # How often (after how many loops) to check the node list for connects/disconnects
 ### TEST VALUE - 5		averages 13-14 seconds for a 6-node network
@@ -275,9 +277,9 @@ do
 			sleep 1
 			break;
 		else
-			echo "Error fetching details for Node: [${NODE}] at "`date`
+			echo `date`" - Error [${rslt}] fetching details for Node: [${NODE}]"
 			sleep $sleep_delay
-			if [ $sleep_delay lt 60 ]
+			if [ $sleep_delay -lt 60 ]
 			then
 				sleep_delay=`echo "$sleep_delay + 7" | bc`
 			fi
