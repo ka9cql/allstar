@@ -30,6 +30,12 @@
 #                      of timeouts/errors I've been seeing from the stats.allstarlink.org server
 #  2019-12-30  msipin  Reworked around new Allstar URL - allstarNodesMapKey.php, which shows a list
 #                      of Allstar nodes that are currently transmitting
+#  2019-12-31  msipin  Reduced the GENERATE_NODE_LIST_MODULO from 30 (based upon old method of working
+#                      through the list, one-by-one) to 18, as the new allstarNodesMapKey.php method
+#                      cycles through FAR less frequently (once every 5 seconds, as opposed to "as
+#                      quickly as the stats server allows us). Changed the node-transmission-threshold
+#                      check to "1", as with the new (allstarNodesMapKey.php) method we'll only ever
+#                      get a "1" on a node's key-up and a "-1" on its unkeying.
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -50,7 +56,7 @@ WGET_TIMEOUT=60
 # How often (after how many loops) to check the node list for connects/disconnects
 ### TEST VALUE - 5		averages 13-14 seconds for a 6-node network
 ### PRODUCTION VALUE - 20	averages about 60 - 80 seconds for a 6-node network
-GENERATE_NODE_LIST_MODULO=30
+GENERATE_NODE_LIST_MODULO=18
 
 
 ########################
@@ -293,10 +299,9 @@ print $i
 }' | grep "^.node=" | awk -F'"' '{ print $1 }' | sed "s/^.node=//" | sort -u > $tmp_file7
 
 
-    echo "DEBUG: NODE LIST -"
-    cat $tmp_file7
-    echo "----------"
-
+    ##echo "DEBUG: NODE LIST -"
+    ##cat $tmp_file7
+    ##echo "----------"
 
 
     for NODE in $NODE_LIST
@@ -393,11 +398,7 @@ if (NF == 3) {
 				echo `date` " -  $NODE $TIME $data"
 
 				# Colorize this node in the "bubble diagram"
-				# NOTE: Epoch times are currently >= 1547000000,
-				#       and if "TIME" is a value like that, it's more likely we recovered
-				#       from a failure to get stats last time around than an indication
-				#       of a transmission this time around.
-				if [ ""$TIME"" -ge 1 -a ""$CCret"" -ne ""$RETURN_NADA"" ]
+				if [ ""$TIME"" -ge 0 -a ""$CCret"" -ne ""$RETURN_NADA"" ]
 				then
 
 					if [ ""$cleared"" = 0 ]
