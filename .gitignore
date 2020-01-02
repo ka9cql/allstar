@@ -1,3 +1,7 @@
+# Directories to ignore -
+sccs
+
+# Files to ignore -
 bubbles.svg
 playnews.ini
 dhtxx.h

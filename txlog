@@ -36,6 +36,8 @@
 #                      quickly as the stats server allows us). Changed the node-transmission-threshold
 #                      check to "1", as with the new (allstarNodesMapKey.php) method we'll only ever
 #                      get a "1" on a node's key-up and a "-1" on its unkeying.
+#  2020-01-02  msipin  Added test/QUICK_TEST to shorten testing. Always clear out all colors of all
+#                      nodes (on the first change, only) when any change is detected.
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -47,6 +49,7 @@ ALLSTAR_NODE_DB=/var/tmp/nodes.db
 outsvg="/srv/http/supermon/bubbles.svg"
 outsvg2="/srv/http/supermon/bubbles2.svg"
 
+QUICK_TEST=0	# Set to "1" to avoid lots of startup stuff and bubble-drawing-initialization
 
 SHOW_RAW=0	# Set to "1" if you want to see the "raw" data for all nodes upon delta detection
 
@@ -100,24 +103,28 @@ rm -f $tmp_file1 $tmp_file2 $tmp_file3 $tmp_file4 $tmp_file5 $tmp_file6 $tmp_fil
 
 
 draw_bubble_diagram() {
-  foreground=$1;
 
-  # Terminate any other attempt to draw bubble diagram
-  killall bubbles >/dev/null 2>/dev/null
-  sleep 2
-
-
-  # NOTE: If "$foreground" variable does not exist, or it exists and is
-  #       set to zero, draw in background
-  if [ -z ""$foreground"" -o "x"$foreground"x" = "x0x" ]
+  if [ ""$QUICK_TEST"" = 0 ]
   then
+      foreground=$1;
+
+      # Terminate any other attempt to draw bubble diagram
+      killall bubbles >/dev/null 2>/dev/null
+      sleep 2
+
+
+      # NOTE: If "$foreground" variable does not exist, or it exists and is
+      #       set to zero, draw in background
+      if [ -z ""$foreground"" -o "x"$foreground"x" = "x0x" ]
+      then
 	# Kick off redraw of bubble map in background
 	#echo "DEBUG: Kicking off redraw of bubble map in background"
 	(nohup bubbles $SEED_NODE_NUMBER >/dev/null 2>/dev/null)&
-  else
+      else
 	# Redraw bubble map in the foreground
 	#echo "DEBUG: Redrawing bubble map in the foreground"
 	bubbles $SEED_NODE_NUMBER
+      fi
   fi
 }
 
@@ -243,9 +250,13 @@ return $retVal
 }
 
 echo
-# Get database of all currently-known Allstar nodes
-echo "Refreshing Allstar node list..."
-getdb
+
+if [ ""$QUICK_TEST"" = 0 ]
+then
+  # Get database of all currently-known Allstar nodes
+  echo "Refreshing Allstar node list..."
+  getdb
+fi
 
 # Generate initial NODE_LIST
 echo "Getting list of connected nodes..."
@@ -254,6 +265,13 @@ get_node_list
 # Draw initial bubble diagram
 echo "Drawing initial bubble diagram..."
 draw_bubble_diagram 1
+
+# If we were in "QUICK_TEST" mode, get out of it, as we want things from here on out to be nominal
+if [ ""$QUICK_TEST"" != 0 ]
+then
+    echo "DEBUG: DROPPING OUT OF QUICK_TEST MODE NOW"
+    QUICK_TEST=0
+fi
 
 
 echo
@@ -364,6 +382,7 @@ print $i
 			bubble_diagram_active $SEED_NODE_NUMBER "green"
 		fi
 
+		# Process differences between last-run and current-run
 		rslt=`diff ${tmp_file1} ${tmp_file2} | wc -l`
 		#echo "DEBUG: rslt = $rslt"
 
@@ -385,7 +404,6 @@ if (NF == 3) {
 };
 }'`
 
-
 			echo "$delta" | while IFS= read LINE
 			do
 
@@ -397,19 +415,22 @@ if (NF == 3) {
 				# Print date and then data
 				echo `date` " -  $NODE $TIME $data"
 
+				# If this is the first update to this diagram in this pass, then
+				# clear out all other nodes' colors
+				if [ ""$cleared"" = 0 ]
+				then
+					# Return all nodes in the "bubble diagram" to "nominal"
+					bubble_diagram_nominal
+					cleared=1
+				fi
+
 				# Colorize this node in the "bubble diagram"
 				if [ ""$TIME"" -ge 0 -a ""$CCret"" -ne ""$RETURN_NADA"" ]
 				then
 
-					if [ ""$cleared"" = 0 ]
-					then
-						# Return all nodes in the "bubble diagram" to "nominal"
-						bubble_diagram_nominal
-						cleared=1
-					fi
-
 					#echo "DEBUG: TIME green"
 					bubble_diagram_active $NODE "green"
+
 				else
 					#echo "DEBUG: TIME lightyellow"
 					bubble_diagram_active $NODE "lightyellow"
