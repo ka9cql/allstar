@@ -23,6 +23,8 @@
 #                      pipe-plus-ampersand (e.g. "|&").
 #  2019-10-23  msipin  Definitively differentiated between Echolink and Voip node numbers following
 #                      advice from the web.
+#  2020-05-24  msipin  Modified when "old" URL (http://stats.allstarlink.org/maps/nodeList.php?node=<xxxxx>)
+#                      stopped working. (Now using http://stats.allstarlink.org/nodeinfo.cgi?node=<xxxxx>)
 ##############################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
@@ -105,11 +107,14 @@ do
 	done_list=`echo ${done_list} $try_node`
 
 	# Check the connectedness of try_node...
-  	newest=`wget --timeout=${WGET_TIMEOUT} -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${try_node} | awk -F"?node=" '{
-for (i=1;i<=NF;i++) {
-    printf "%s\n\n",$i;
-};
-}' | grep callsign | sed "s/<\/a>/ /g" | awk '{ print $2 }' | sed "s/C//g"`
+  	## ORIG - newest=`wget --timeout=${WGET_TIMEOUT} -q -O- http://stats.allstarlink.org/maps/nodeList.php?node=${try_node} | awk -F"?node=" '{
+# for (i=1;i<=NF;i++) {
+#    printf "%s\n\n",$i;
+#};
+#}' | grep callsign | sed "s/<\/a>/ /g" | awk '{ print $2 }' | sed "s/C//g"`
+
+	# After 2020-05-24 -
+  	newest=`wget --timeout=${WGET_TIMEOUT} -q -O- http://stats.allstarlink.org/nodeinfo.cgi?node=${try_node} | grep node | sed "s/^<a href=\"?node=//" | sed 's/"/ /g' | awk '{ print $1 }'`
 
 	#echo "DEBUG NEWEST: $newest"
 	for check in $newest
