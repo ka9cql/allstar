@@ -38,6 +38,10 @@
 #                      get a "1" on a node's key-up and a "-1" on its unkeying.
 #  2020-01-02  msipin  Added test/QUICK_TEST to shorten testing. Always clear out all colors of all
 #                      nodes (on the first change, only) when any change is detected.
+#  2020-05-28  msipin  Some time on or around 2020-05-24 Allstar stopped supporting their "Active,
+#                      Keyed Station List", which this tool relied upon. I will have to go back to
+#                      my old method of generating even more traffic at their servers in order to
+#                      produce this tool's output. =(
 ####################
 
 # Local copy of Allstar node database (CAUTION: might not exist! Don't assume it does!)
