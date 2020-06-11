@@ -4,6 +4,21 @@
 #                  "band opening" on the Amateur Radio 6 meter band (as defined by external
 #                  radio receivers, and commanded from a remote computer).
 #
+# This file is expected to be used by a remote computer over an ssh shell in the following manner -
+#
+#   sudo sshpass -f .passwd ssh -p 222 root@${ALLSTAR_IP_ADDRESS} " source /usr/local/etc/allstar.env &&
+#                        asterisk -r -x \"rpt ${MODE} \$NODE1 ${PLAYFILE}\" >> /dev/shm/error.log 2> &1 "
+#
+# where ${MODE} is equal to one of the following -
+#         "localplay" = Play message *locally* (aka only to your local Allstar node)
+#         "playbacak" = Playback message to your Allstar node as well as to all nodes currently connected to yours
+#
+# NOTE: The use of "sshpass" is an attempt to hide the credentials used to secure the ssh connection from
+#       other users on the calling system. Those credentials must be stored securely in the .passwd file.
+#       This file must be readable by ONLY root, as others could compromise the Allstar system after reading
+#       the file. (This is because Allstar requires users to login as "root".)
+#
+#
 # HISTORICAL INFORMATION -
 #
 #  2020-06-10  msipin  Created
@@ -14,4 +29,6 @@ ALERT_FILE=${SOUND_DIR}/6malert.2.gsm
 
 
 cat ${SOUND_DIR}/silence/3.gsm ${SOUND_DIR}/thousandth.gsm ${SOUND_DIR}/miles.gsm ${SOUND_DIR}/digits/6.gsm ${SOUND_DIR}/meter.gsm ${SOUND_DIR}/alert.gsm ${SOUND_DIR}/silence/3.gsm ${SOUND_DIR}/rpt/nodenames/${NODE1}.gsm > ${ALERT_FILE}
+
+exit 0
 
