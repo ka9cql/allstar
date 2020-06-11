@@ -1,0 +1,17 @@
+#!/bin/sh
+##############################
+# make6mft8alert - Create a GSM sound file for Allstar to play whenever told that there is a
+#                  "band opening" on the Amateur Radio 6 meter band (as defined by external
+#                  radio receivers, and commanded from a remote computer).
+#
+# HISTORICAL INFORMATION -
+#
+#  2020-06-10  msipin  Created
+##############################
+
+SOUND_DIR=/var/lib/asterisk/sounds
+ALERT_FILE=${SOUND_DIR}/6malert.2.gsm
+
+
+cat ${SOUND_DIR}/silence/3.gsm ${SOUND_DIR}/thousandth.gsm ${SOUND_DIR}/miles.gsm ${SOUND_DIR}/digits/6.gsm ${SOUND_DIR}/meter.gsm ${SOUND_DIR}/alert.gsm ${SOUND_DIR}/silence/3.gsm ${SOUND_DIR}/rpt/nodenames/${NODE1}.gsm > ${ALERT_FILE}
+
