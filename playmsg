@@ -1,0 +1,51 @@
+#!/bin/bash
+#######################################
+# playmsg - Tell Asterisk to play a message over the RF link, either "locally" (aka over
+#           this link, only) or to all connected Allstar nodes.
+#
+# HISTORICAL INFORMATION -
+#
+#  2020-10-05  msipin  Created by taking over most of the 2020-06-05 "allstarplay" script in the
+#                      "Marquee" (signage) git repository.
+#######################################
+
+SOUND_DIR=/var/lib/asterisk/sounds
+ALERT_FILE=${SOUND_DIR}/dynamic_msg.gsm
+
+# NOTE: This script can only play pre-existing *.gsm files that are in the Asterisk
+#       server's /var/lib/asterisk/sounds ($SOUND_DIR) directory
+#
+
+
+# "localplay" = Play message *locally* (aka only to your local Allstar node)
+# "playbacak" = Playback message to your Allstar node as well as to all nodes currently connected to yours
+MODE="localplay"
+
+# See if user specified "-a" (ALL) command-line option -
+if [ $# -ge 1 -a ""$1"" = "-a" ]
+then
+        MODE="playback"
+        shift 1
+fi
+
+# File to play by default
+PLAYFILE="alert"
+
+
+# If user specified an alternate file (or files) to play, pick it (them) up
+if [ $# -ge 1 ]
+then
+  PLAYFILE=${ALERT_FILE}
+  rm -f $ALERT_FILE
+  for A in $*
+  do
+        cat /var/lib/asterisk/sounds/${A}.gsm >> $PLAYFILE
+  done
+  PLAYFILE="dynamic_msg"
+fi
+
+
+asterisk -r -x "rpt ${MODE} $NODE1 ${PLAYFILE}" >> /dev/shm/error.log 2>&1
+
+exit 0
+
