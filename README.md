@@ -57,6 +57,8 @@ Continuing...
 #
     b) ln -s /root/allstar/playnewstest .     (It's OK if it says "file already exists")
 #
+    c) ln -s /root/allstar/playnews.ini .     (It's OK if it says "file already exists")
+#
 13) cd /srv/http/supermon
 14) Make files available to Apache -
 #
