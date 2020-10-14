@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# playnewstest v1.00 - Kyle Krieg AA0Z, Mike Sipin KA9CQL 2018-12-27
+# playnewstest - Kyle Krieg AA0Z, Mike Sipin KA9CQL 2018-12-27
 #
 # Includes voice messages before play, at breaks, and after play.
 # This script can be configured for global playback! 
@@ -43,9 +43,14 @@
 # ARRLcontinue or ARNcontinue - voice message at breaks
 # ARRLstop or ARNstop         - voice message at end of play
 #
-# V1.00 - Taken from playnews v0.11 by WA3DSP circa 06/2017
 #
 #   DO NOT use the the "NOW" time parameter in a cron !!!
+#
+# HISTORICAL INFORMATION -
+#
+#  2018-12-27  Kyle Krieg AA0Z, Mike Sipin KA9CQL - Developed based off of
+#              playnews v0.11 by WA3DSP circa 06/2017
+#######################################
 
 script_dir=$(dirname "$0")
 if [ ! -f "$script_dir/playnews.ini" ]
@@ -202,7 +207,7 @@ sleep 10
 START=0
 
 # Calculate number of segments
-MAXPART=`ls /tmp/news.part*.ul | wc -l`
+MAXPART=`ls $TMPDIR/news.part*.ul | wc -l`
 PART="1"
 #echo $MAXPART
 

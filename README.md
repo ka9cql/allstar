@@ -42,6 +42,10 @@ To install or update these tools on an Arch Linux-based Allstar node (circa 2018
 #
     i) ln -s /root/allstar/txlog .         (It's OK if it says "file already exists")
 #
+    j) ln -s /root/allstar/playnewstest .  (It's OK if it says "file already exists")
+#
+    k) ln -s /root/allstar/playnews.ini .  (It's OK if it says "file already exists")
+#
 
 11. mkdir -p /etc/asterisk/local/playnews
 12. cd /etc/asterisk/local/playnews
@@ -52,9 +56,11 @@ To install or update these tools on an Arch Linux-based Allstar node (circa 2018
 #
     a) ln -s /root/allstar/downloadnews .     (It's OK if it says "file already exists")
 #
-    b) ln -s /root/allstar/playnewstest .     (It's OK if it says "file already exists")
+    b) ln -s /root/allstar/newscut .          (It's OK if it says "file already exists")
 #
-    c) ln -s /root/allstar/playnews.ini .     (It's OK if it says "file already exists")
+    c) ln -s /root/allstar/playnewstest .     (It's OK if it says "file already exists")
+#
+    d) ln -s /root/allstar/playnews.ini .     (It's OK if it says "file already exists")
 #
 17. cd /srv/http/supermon
 18. Make files available to Apache -

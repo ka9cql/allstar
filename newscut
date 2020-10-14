@@ -18,11 +18,14 @@
 #                      for any purpose (including the 10-minute FCC ID requirement stated above), then
 #                      it is up to the operator to re-run this tool with the new "--maxcut <nn>"
 #                      command-line argument to specify where (max) to cut each partition.
+#  2020-10-14  msipin  Converted output news.part.*.wav files to ulaw (news.part*.ul) and put them where
+#                      playnews/playnewstest need them to be.
 #######################
 
 TMPDIR="/dev/shm" 
 SRC="dunno.wav"
 TYPE="DUNNO"
+ULAW_DIR="/tmp"
 
 # Prevent splits from occurring "too often" or "not often enough"
 MIN_SPLIT_DURATION=100	# (minimum duration in seconds)
@@ -162,21 +165,31 @@ echo
 START=0
 PART=1
 
-rm -f $TMPDIR/part*.wav
+rm -f $TMPDIR/news.part*.wav
+rm -f $ULAW_DIR/news.part*.wav
 for SPLIT in $splits
 do
 	# Establish cut location (it's a little bit before the tone-detection location)
 	CUTLOC=`echo $SPLIT - $DETECT_LEADER | bc`
 
-	echo "Creating $TMPDIR/part$PART.wav as $START to $CUTLOC "
-	sox --temp $TMPDIR $SRC $TMPDIR/part$PART.wav trim =$START =$CUTLOC &> /dev/null 2>&1
+	echo "Creating $TMPDIR/news.part$PART.wav as $START to $CUTLOC "
+	sox --temp $TMPDIR $SRC $TMPDIR/news.part$PART.wav trim =$START =$CUTLOC &> /dev/null 2>&1
+	echo "Converting $TMPDIR/news.part$PART.wav to u-law as $ULAW_DIR/news.part$PART.ul"
+	sox --temp $TMPDIR -V $TMPDIR/news.part$PART.wav -r 8000 -c 1 -t ul $ULAW_DIR/news.part$PART.ul &> /dev/null 2>&1
+
 	let "PART += 1"
 	START=`echo $CUTLOC + $REMOVE | bc`
 done
 # Process final part -
-echo "Creating $TMPDIR/part$PART.wav as $START to EOF "
-sox --temp $TMPDIR $SRC $TMPDIR/part$PART.wav trim =$START =99999 &> /dev/null 2>&1
+echo "Creating $TMPDIR/news.part$PART.wav as $START to EOF "
+sox --temp $TMPDIR $SRC $TMPDIR/news.part$PART.wav trim =$START =99999 &> /dev/null 2>&1
+echo "Converting $TMPDIR/news.part$PART.wav to u-law as $ULAW_DIR/news.part$PART.ul"
+sox --temp $TMPDIR -V $TMPDIR/news.part$PART.wav -r 8000 -c 1 -t ul $ULAW_DIR/news.part$PART.ul &> /dev/null 2>&1
 
+# Remove temporary (.mp3 .wav) files
+rm -f $TMPDIR/news.part*.wav
+rm -f news.mp3 news.wav
+rm -f ARRL.mp3 ARRL.wav
 
 
 echo
