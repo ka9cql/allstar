@@ -8,13 +8,9 @@ To install or update these tools on an Arch Linux-based Allstar node (circa 2018
 
 # IF THIS IS THE FIRST TIME DOING ALL OF THIS (aka "starting from scratch") -
 2. cd /root
-
-<br>
-
+# IF GIT IS NOT ALREADY ON YOUR ALLSTAR NODE -
 2.5 pacman -S git (if it's not already on your box)
-
-<br>
-
+#
 3. git clone https://github.com/ka9cql/allstar.git
 4. Continue with 5, below
 
@@ -34,23 +30,40 @@ Continuing...
 8) chmod 755 astar bubbles findsplit freqdetect.py getdb gmtdate newscut pitemp txlog downloadnews playnewstest
 9) cd /usr/local/bin
 10) Make commands available to all users -
+#
     a) ln -s /root/allstar/astar .         (It's OK if it says "file already exists")
+#
     b) ln -s /root/allstar/bubbles .       (It's OK if it says "file already exists")
+#
     c) ln -s /root/allstar/findsplit .     (It's OK if it says "file already exists")
+#
     d) ln -s /root/allstar/freqdetect.py . (It's OK if it says "file already exists")
+#
     e) ln -s /root/allstar/getdb .         (It's OK if it says "file already exists")
+#
     f) ln -s /root/allstar/gmtdate .       (It's OK if it says "file already exists")
+#
     g) ln -s /root/allstar/newscut .       (It's OK if it says "file already exists")
+#
     h) ln -s /root/allstar/pitemp .        (It's OK if it says "file already exists")
+#
     i) ln -s /root/allstar/txlog .         (It's OK if it says "file already exists")
+#
+
 11) cd /etc/asterisk/local/playnews        (Create this directory if it doesn't exist, and then "cd" into it)
 12) Make files available to Allstar/cron -
+#
     a) ln -s /root/allstar/downloadnews .     (It's OK if it says "file already exists")
+#
     b) ln -s /root/allstar/playnewstest .     (It's OK if it says "file already exists")
+#
 13) cd /srv/http/supermon
 14) Make files available to Apache -
+#
     a) cp /root/allstar/AllstarBubbleDiagram.html .      (Answer "Y" (YES) to overwrite file if it already exists)
+#
     b) cp /root/allstar/AllstarBubbleDiagram2.html .     (Answer "Y" (YES) to overwrite file if it already exists)
+#
 15) cd /root/allstar
 16) txlog             (NOTE: LEAVE THIS PROCESS  RUNNING! - It is the one that updates the bubble diagram in real-time!)
 17) Open a web browser to this URL (substitute your Allstar node's IP address for the one shown here) - http://192.168.1.20/supermon/AllstarBubbleDiagram2.html
