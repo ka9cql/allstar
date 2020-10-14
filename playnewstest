@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# downloadnews v1.00 - Kyle Krieg AA0Z, Mike Sipin KA9CQL 2018-12-27
+# playnewstest v1.00 - Kyle Krieg AA0Z, Mike Sipin KA9CQL 2018-12-27
 #
 # Includes voice messages before play, at breaks, and after play.
 # This script can be configured for global playback! 
