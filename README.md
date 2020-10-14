@@ -77,14 +77,18 @@ NOTES:
 *  If you want to keep "txlog" running in the background even if you exit the shell or log off of your node, try this -
 
 A) cd /root
+#
 B) (nohup /root/allstar/txlog >> /root/txlog.log 2>>/root/txlog.err) &
+#
 
 * If you want to run the "downloadnews" or "playnewstest" files, read the notes in their top portions. These notes specify how to use them.
 
 * To run this software on any "non-Allstar" (or, more correctly, any non-Arch Linux-based Allstar) system, try the following changes -
 
 a) Substitute your Linux distribution's package manager (yum, apt-get, etc) for the Arch Linux "pacman" package manager mentioned in steps 2-4, above.
+#
 b) Substitute your webserver's content-source directory (/var/www/html, etc.) in step 17, and adjust the URLs used to display the webpages in steps 21 and 23 to match
+#
 
 
 
