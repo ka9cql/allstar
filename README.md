@@ -114,10 +114,12 @@ Download and prepare the audio files(s) for later playing -
 #
 
 
-After running "newscut", you can then play the audio file(s) over your Allstar node.  The tool below will "warn" your users 10, and five minutes before playing the main audio file.
+After running "newscut", you can then play the audio file(s) over your Allstar node.  The tool below will "warn" your users that the news is about to be played, and then play the news.
+
+NOTE: YOU MUST ensure that all of your timeout timers are set sufficiently long (5 minutes or so) before playing the news.  Check both Allstar/Asterisk and your node's radio!!
 
 
-2) Execute "playnewstest" from the command line in the /root/allstar directory 10 minutes prior to when you want the audio news to begin playing like this -
+2) Execute "playnewstest" from the command line in the /root/allstar directory when you want the audio news to begin playing like this -
 #
     playnewstest ARN NOW L       (to play the AR Newsline)
 #
@@ -146,12 +148,12 @@ Run script to download and prepare (cut) the ARRL news file every Friday at 2:30
 30 14 * * 5 /etc/asterisk/newscut ARRL &> /root/allstar/newscut.log 2>&1
 
 #
-Run script at 8:30 PM to play ARRL news "globally" every Tuesday at 9:00 PM (warnings to users will occur at 8:50 and 8:55 PM)
+Run script at 8:30 PM to play ARRL news "globally" every Tuesday at 9:00 PM (warnings to users will occur 10 and 5 minutes prior to commencement of playing)
 #
 30 20 * * 2 /etc/asterisk/playnewstest ARRL 21:00 G &> /dev/null 2>&1
 
 #
-Run script at 6:00 PM to play ARN news "locally" every Thursday at 7PM
+Run script at 6:00 PM to play ARN news "locally" every Thursday at 7PM (again, warnings will occur 10 and 5 minutes before playing starts)
 #
 00 18 * * 4 /etc/asterisk/playnewstest ARN 19:00 L &> /dev/null 2>&1
 #
