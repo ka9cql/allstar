@@ -8,6 +8,7 @@ To install or update these tools on an Arch Linux-based Allstar node (circa 2018
 
 # IF THIS IS THE FIRST TIME DOING ALL OF THIS (aka "starting from scratch") -
 2. cd /root
+2.5 pacman -S git (if it's not already on your box)
 3. git clone https://github.com/ka9cql/allstar.git
 4. Continue with 5, below
 
