@@ -159,4 +159,7 @@ Run script at 6:00 PM to play ARN news "locally" every Thursday at 7PM (again, w
 #
 #
 
+NOTE: As of 2021 Allstar has made infrastructure changes that cause this codebase's real-time bubble display and txlog functions to misbehave. I will work to fix them ASAP. For now, know that it's not your system, it's my code that's the problem. Thanks for your patience!
+
+
 - Mike, KA9CQL
