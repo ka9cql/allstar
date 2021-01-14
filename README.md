@@ -1,6 +1,10 @@
 # allstar
 Tools and scripts related to the Allstar Ham Radio Linking capability
 
+NOTE: As of 2021 Allstar has made infrastructure changes that cause this codebase's real-time bubble display and txlog functions to misbehave. I will work to fix them ASAP. For now, know that it's not your system, it's my code that's the problem. Thanks for your patience!
+
+
+
 To install or update these tools on an Arch Linux-based Allstar node (circa 2018)
 ---------------------------------------------------------------------------------
 
@@ -158,8 +162,6 @@ Run script at 6:00 PM to play ARN news "locally" every Thursday at 7PM (again, w
 00 18 * * 4 /etc/asterisk/playnewstest ARN 19:00 L &> /dev/null 2>&1
 #
 #
-
-NOTE: As of 2021 Allstar has made infrastructure changes that cause this codebase's real-time bubble display and txlog functions to misbehave. I will work to fix them ASAP. For now, know that it's not your system, it's my code that's the problem. Thanks for your patience!
 
 
 - Mike, KA9CQL
