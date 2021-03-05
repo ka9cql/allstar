@@ -11,7 +11,7 @@
 #############################
 
 # Allstar node IP address - Set this to YOUR ALLSTAR NODE's IP ADDRESS!!!
-IP="192.168.2.132"
+IP="localhost"
 
 # Allstar node number - Pick this up from the local environment
 ##NODE=49125
