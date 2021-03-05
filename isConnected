@@ -1,0 +1,34 @@
+#!/bin/sh
+#############################
+# getAllstar - Check how many Allstar connections the given node is currently connected to
+#
+# HISTORICAL INFORMATION -
+#
+#  2019-08-14  msipin  Created
+#  2019-08-15  msipin  Sped up dramatically
+#  2019-11-16  epowell Display which node(s) the given Allstar node is connected to.
+#  2020-10-22  msipin  Shortened display by a few characters to reduce chance of scrolling
+#############################
+
+# Allstar node IP address - Set this to YOUR ALLSTAR NODE's IP ADDRESS!!!
+IP="192.168.2.132"
+
+# Allstar node number - Pick this up from the local environment
+##NODE=49125
+NODE=$NODE1
+
+
+#conns=`curl -qs http://${IP}/supermon/server.php?nodes=${NODE} | head -20 | grep -c ',"direction":"OUT",'`
+#conns=`wget -q -O - "http://${IP}/cgi-bin/lsnodes_web?node=${NODE}" | grep -c "</td><td>OUT</td><td>"`
+conns=`wget -q -O - "http://${IP}/cgi-bin/lsnodes_web?node=${NODE}" | grep \* | sed "s/</ /g" | sed "s/>/ /g" | sed "s/*/ */g" | awk '{ for (i=1; i <= NF; i++) { if ($i == "*") printf " %s",$(i+3); } }'`
+
+#if [ ""$conns"" -lt 1 ]
+if [ "$conns" = "" ]
+then
+	echo "NO CONNECTIONS"
+else
+        echo "Your node is connected to:$conns"
+fi
+
+exit 0
+
